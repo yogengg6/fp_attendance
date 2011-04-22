@@ -1,4 +1,12 @@
+/**
+ * Copyleft : This program is published under GPL
+ * Author   : Yusuke
+ * Email    : Qiuchengxuan@gmail.com
+ * Date	    : 2011-4-22 21:18
+ */
+
 #pragma once
+#define DEBUG
 
 #include <cstdio>
 
@@ -11,4 +19,4 @@ using namespace std;
 typedef int status_t;
 
 const int STDOUT_BUFFER_SIZE = 400;
-char stdout_buffer[STDOUT_BUFFER_SIZE];
+extern char stdout_buffer[STDOUT_BUFFER_SIZE];

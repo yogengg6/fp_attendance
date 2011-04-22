@@ -1,5 +1,11 @@
-#include "MDLDB_Connector.h"
+/**
+ * Copyleft : This program is published under GPL
+ * Author   : Yusuke
+ * Email    : Qiuchengxuan@gmail.com
+ * Date	    : 2011-4-22 21:18
+ */
 
+#include "MDLDB_Connector.h"
 
 MDLDB_Connector::MDLDB_Connector(void)
 {
@@ -22,6 +28,21 @@ MDLDB_Connector::MDLDB_Connector(const char * const db_host,
     this->dbconnect(db_host, db_user, db_passwd);
     if (this->status != MDLDB_CONNECTED)
         return;
+    #ifdef DEBUG
+    print_msg("MDLDB_Connector", "connection established.");
+    #endif
+    this->associate_course(course_name);
+    if (this->status != MDLDB_CONNECTED)
+        return;
+    #ifdef DEBUG
+    print_msg("MDLDB_Connector", "course association success.");
+    #endif
+    this->associate_session(session_name);
+    if (this->status == MDLDB_CONNECTED)
+        this->status = MDLDB_OK;
+    #ifdef DEBUG
+    print_msg("MDLDB_Connector", "session association success, connection established.");
+    #endif
 }
 
 MDLDB_Connector::~MDLDB_Connector(void)
@@ -32,6 +53,9 @@ MDLDB_Connector::~MDLDB_Connector(void)
         delete this->state;
 }
 
+/*
+ * create connection to MySQL Database server
+ */
 status_t MDLDB_Connector::dbconnect(const char * const db_host,
                                     const char * const db_user,
                                     const char * const db_passwd
@@ -41,56 +65,92 @@ status_t MDLDB_Connector::dbconnect(const char * const db_host,
         this->connection = this->driver->connect(db_host, db_user, db_passwd);
     } catch (sql::SQLException &e) {
         if (e.getErrorCode() == 10061) {
-            #ifdef DEBUG
+#ifdef DEBUG
             sprintf(stdout_buffer, "connect to %s fail", db_host);
-            print_msg(stdout_buffer);
-            #endif
+            print_msg("MDLDB_Connector", stdout_buffer);
+#endif
             this->status = MDLDB_CONNECTION_FAIL;
         } else if (e.getErrorCode() == 1045) {
-            #ifdef DEBUG
-            print_msg("connection refused");
-            #endif
+#ifdef DEBUG
+            print_msg("MDLDB_Connector", "connection refused");
+#endif
             this->status = MDLDB_CONNECTION_REFUSED;
         }
         return this->status;
     }
-    this->state->execute("USE moodle");
+    this->connection->setSchema("moodle");
     this->state = this->connection->createStatement();
+    this->state->execute("SET NAMES utf8");
     this->status = MDLDB_CONNECTED;
     return this->status;
 }
 
+
+/*
+ * check and get course_id from mdl_course
+ */
 status_t MDLDB_Connector::associate_course(const string course_name)
 {
-    sql::PreparedStatement *prep_stmt = this->connection->prepareStatement("SELECT id FROM mdl_session WHERE fullname=\"?\"");
+    sql::PreparedStatement *prep_stmt = NULL;
+    try {
+        prep_stmt = this->connection->prepareStatement("SELECT id FROM mdl_course WHERE fullname=?");
+    } catch (sql::SQLException &e) {
+        cout << e.what() << endl;
+        this->status = MDLDB_UNKNOWN_ERROR;
+        return MDLDB_UNKNOWN_ERROR;
+    }
+    
+	prep_stmt->setString(1, course_name);
+    sql::ResultSet *rs = prep_stmt->executeQuery();
+    switch (rs->rowsCount()) {
+    case 0:
+        this->status = MDLDB_NO_COURSE;
+        break;
+    case 1:
+        rs->next();
+        this->session_id = rs->getInt("id");
+        break;
+    default:
+        this->status = MDLDB_DUPLICATE_COURSE;
+    }
+    delete rs;
+    delete prep_stmt;
+    return this->status;
     return MDLDB_CONNECTED;
 }
 
+/*
+ * check and get session_id from mdl_attendance
+ */
 status_t MDLDB_Connector::associate_session(const string session_name)
 {
-    //get session_id from mdl_attendance
     time_t now = time(NULL);
-    static const char* prep_sql = "SELECT id FROM mdl_attendance_sessions WHERE fullname=\"?\" AND sessdate BETWEEN ? AND ?";
-    sql::PreparedStatement *prep_stmt = this->connection->prepareStatement(prep_sql);
+    sql::PreparedStatement *prep_stmt = NULL;
+    static const char* prep_sql = "SELECT id FROM mdl_attendance_sessions WHERE fullname=? AND sessdate BETWEEN ? AND ?";
+
+    try {
+        prep_stmt = this->connection->prepareStatement(prep_sql);
+    } catch(sql::SQLException &e) {
+        cout << e.what() << endl;
+        this->status = MDLDB_UNKNOWN_ERROR;
+        return MDLDB_UNKNOWN_ERROR;
+    }
+    
     prep_stmt->setString(1, session_name);
     prep_stmt->setInt(2, static_cast<unsigned long>(now - THERE_HOURS));
     prep_stmt->setInt(3, static_cast<unsigned long>(now + THERE_HOURS));
     sql::ResultSet *rs = prep_stmt->executeQuery();
-    int rows_count = rs->rowsCount();
-    if (rows_count == 0) {
+	switch (rs->rowsCount()) {
+	case 0:
 		this->status = MDLDB_NO_SESSION;
-	} else if (rows_count == 1) {
+		break;
+	case 1:
 		rs->next();
 		this->session_id = rs->getInt("id");
-		this->status = MDLDB_OK;
-    } else {
-        this->status = MDLDB_DUPLICATE_SESSION;
+		break;
+	default:
+		this->status = MDLDB_DUPLICATE_SESSION;
 	}
 	delete rs;
 	return this->status;
-
-#ifdef DEBUG
-    sprintf(stdout_buffer, "connect to %s success", db_host);
-    print_msg(stdout_buffer);
-#endif
 }
