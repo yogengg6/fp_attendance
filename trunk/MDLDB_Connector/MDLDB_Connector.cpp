@@ -9,7 +9,7 @@
 
 MDLDB_Connector::MDLDB_Connector(void)
 {
-	this->state = NULL;
+	this->statement = NULL;
 	this->connection = NULL;
 	this->status = MDLDB_DISCONNECTED;
     this->driver = sql::mysql::get_driver_instance();
@@ -21,7 +21,7 @@ MDLDB_Connector::MDLDB_Connector(const char * const db_host,
                                  const string session_name
                                  )
 {
-    this->state = NULL;
+    this->statement = NULL;
     this->connection = NULL;
     this->status = MDLDB_DISCONNECTED;
     this->driver = sql::mysql::get_driver_instance();
@@ -47,10 +47,10 @@ MDLDB_Connector::MDLDB_Connector(const char * const db_host,
 
 MDLDB_Connector::~MDLDB_Connector(void)
 {
-    if (this->state != NULL)
+    if (this->statement != NULL)
         delete this->connection;
     if (this->connection != NULL)
-        delete this->state;
+        delete this->statement;
 }
 
 /*
@@ -79,8 +79,8 @@ status_t MDLDB_Connector::dbconnect(const char * const db_host,
         return this->status;
     }
     this->connection->setSchema("moodle");
-    this->state = this->connection->createStatement();
-    this->state->execute("SET NAMES utf8");
+    this->statement = this->connection->createStatement();
+    this->statement->execute("SET NAMES utf8");
     this->status = MDLDB_CONNECTED;
     return this->status;
 }

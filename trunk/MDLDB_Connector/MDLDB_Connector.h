@@ -70,7 +70,7 @@ private:
     uint32_t course_id;
     uint32_t session_id;
     status_t status;
-    sql::Statement *state;
+    sql::Statement *statement;
     sql::Connection *connection;
     sql::mysql::MySQL_Driver *driver;
 };
