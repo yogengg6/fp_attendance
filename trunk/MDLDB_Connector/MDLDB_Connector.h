@@ -39,6 +39,7 @@ class MDLDB_Connector
 {
 public:
     MDLDB_Connector(void);
+    //notice that session_name is session fullname
     MDLDB_Connector(const char * const db_host,
                     const char * const db_user,
                     const char * const db_passwd,
@@ -47,22 +48,22 @@ public:
                     );
     ~MDLDB_Connector(void);
     bool dbconnect(const char * const db_host,
-                       const char * const db_user,
-                       const char * const db_passwd
-                       )
-                       throw(MDLDB_Exception);
+                   const char * const db_user,
+                   const char * const db_passwd
+                   )
+                   throw(MDLDB_Exception);
     bool associate_course(const string course_name) throw(MDLDB_Exception);
     bool associate_session(const string session_name) throw(MDLDB_Exception);
+    bool enroll(const string& idnumber, const uint16_t* const finger_print_data);
 
+    inline bool connection_established() const {return this->connection != NULL;}
+    inline bool course_associated() const {return this->course_id > 0;}
+    inline bool session_associated() const {return this->session_id > 0;}
     inline bool is_valid() const
     {
         return  (this->connection != NULL) && (this->course_id > 0) && (this->session_id > 0);
     }
-    inline bool connection_established() const {return this->connection != NULL;}
-    inline bool course_associated() const {return this->course_id > 0;}
-    inline bool session_associated() const {return this->session_id > 0;}
 protected:
-private:
     uint32_t course_id;
     uint32_t session_id;
     sql::Statement *statement;

@@ -30,7 +30,8 @@ int main()
         MDLDB_Connector conn(db_host, db_user, db_passwd, course, session);
         if (conn.is_valid())
             cout << "connect to database success" << endl;
-    } catch (MDLDB_Exception) {
+    } catch (MDLDB_Exception& e) {
+        cout << e.what() << endl;
     }
 	return 0;  
 }  

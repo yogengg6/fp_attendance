@@ -14,18 +14,23 @@
 using namespace std;
 
 const int MDLDB_CONNECTED           =  0;
-const int MDLDB_DISCONNECTED        = -1;
-const int MDLDB_UNKNOWN_ERROR       = -2;
+const int MDLDB_GENERAL_ERROR       = -1;
+
+//CONNECTION ERRORS
+const int MDLDB_DISCONNECTED        = -2;
 const int MDLDB_CONNECTION_FAIL     = -3;
 const int MDLDB_CONNECTION_REFUSED  = -4;
+const int MDLDB_UNCOMPLT_CONNECTION = -5;
 
-const int MDLDB_NO_COURSE           = -5;
-const int MDLDB_COURSE_NOT_FOUND    = -6;
-const int MDLDB_DUPLICATE_COURSE    = -7;
+//COURSE ASSOCIATION ERRORS
+const int MDLDB_NO_COURSE           = -6;
+const int MDLDB_COURSE_NOT_FOUND    = -7;
+const int MDLDB_DUPLICATE_COURSE    = -8;
 
-const int MDLDB_NO_SESSION          = -8;
-const int MDLDB_SESSION_NOT_FOUND   = -9;
-const int MDLDB_DUPLICATE_SESSION   = -10;
+//SESSION ASSOCIATION ERRORS
+const int MDLDB_NO_SESSION          = -9;
+const int MDLDB_SESSION_NOT_FOUND   = -10;
+const int MDLDB_DUPLICATE_SESSION   = -11;
 
 class MDLDB_Exception: public std::runtime_error
 {
