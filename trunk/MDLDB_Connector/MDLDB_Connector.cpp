@@ -28,7 +28,7 @@ MDLDB_Connector::MDLDB_Connector(const char * const db_host,
         this->associate_course(course_name);
         this->associate_session(session_name);
     } catch (MDLDB_Exception& e) {
-        std::cout << e.what() << std::endl;
+        std::cout << "[MDLDB]:" << e.what() << std::endl;
         delete this->statement;
         delete this->connection;
         throw;
@@ -94,7 +94,7 @@ bool MDLDB_Connector::associate_course(const string course_name) throw(MDLDB_Exc
         delete rs;
         delete prep_stmt;
     } catch (sql::SQLException &e) {
-        std::cout << e.what() << std::endl;
+        std::cout << "[MDLDB]:" << e.what() << std::endl;
         if (prep_stmt != NULL)
             delete prep_stmt;
         if (rs != NULL)
@@ -110,7 +110,7 @@ bool MDLDB_Connector::associate_course(const string course_name) throw(MDLDB_Exc
  */
 bool MDLDB_Connector::associate_session(const string session_name) throw(MDLDB_Exception)
 {
-    if (!this->conection_established())
+    if (!this->connection_established())
         throw MDLDB_Exception("connection not established", MDLDB_DISCONNECTED);
     if (!this->course_associated())
         throw MDLDB_Exception("course not associated", MDLDB_NO_SESSION);
@@ -140,7 +140,7 @@ bool MDLDB_Connector::associate_session(const string session_name) throw(MDLDB_E
         delete rs;
         delete prep_stmt;
     } catch(sql::SQLException &e) {
-        std::cout << e.what() << std::endl;
+        std::cout << "[MDLDB]:" << e.what() << std::endl;
         if (prep_stmt != NULL)
             delete prep_stmt;
         if (rs != NULL)

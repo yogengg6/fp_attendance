@@ -31,7 +31,7 @@
 
 using namespace std;
 
-const time_t  BEFORE_CLASS_BEGIN            =  10 * 60 - 1;
+const time_t  BEFORE_CLASS_BEGIN =  10 * 60 - 1;
 
 class MDLDB_Connector
 {
@@ -51,7 +51,12 @@ public:
                        throw(MDLDB_Exception);
     bool associate_course(const string course_name) throw(MDLDB_Exception);
     bool associate_session(const string session_name) throw(MDLDB_Exception);
-    inline bool conection_established() const {return this->connection != NULL;}
+
+    inline bool is_valid() const
+    {
+        return  (this->connection != NULL) && (this->course_id > 0) && (this->session_id > 0);
+    }
+    inline bool connection_established() const {return this->connection != NULL;}
     inline bool course_associated() const {return this->course_id > 0;}
     inline bool session_associated() const {return this->session_id > 0;}
 protected:
