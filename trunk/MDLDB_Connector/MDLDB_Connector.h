@@ -26,6 +26,7 @@
 #include <cppconn/exception.h>
 
 #include "MDLDB_Exception.h"
+#include "student_info.h"
 
 #ifdef __GNUC__
 #define sprintf_s(buffer, format, ...) sprintf(buffer, format, __VA_ARGS__)
@@ -55,6 +56,9 @@ public:
     bool associate_course(const string course_name) throw(MDLDB_Exception);
     bool associate_session(const string session_name) throw(MDLDB_Exception);
     bool enroll(const string& idnumber, const uint16_t* const finger_print_data);
+	status_t attend(const string& idnumber);
+	int get_all_info(student_info_t *si);
+	int get_uid(const string& idnumber);
 
     inline bool connection_established() const {return this->connection != NULL;}
     inline bool course_associated() const {return this->course_id > 0;}

@@ -173,3 +173,52 @@ bool MDLDB_Connector::enroll(const string &idnumber, const uint16_t* const finge
         cout << e.what() << endl;
     }
 }
+
+int MDLDB_Connector::get_uid(const string& idnumber)
+{
+	if (!this->is_valid())
+		throw MDLDB_Exception("[MDLDB]:Connection not completed", MDLDB_UNCOMPLT_CONNECTION);
+	sql::PreparedStatement *prep_stmt = NULL;
+	sql::ResultSet *rs = NULL;
+	try {
+		this->connection->setSchema("moodle");
+		prep_stmt = this->connection->prepareStatement("SELECT id FROM mdl_user WHERE idnumber = ?");
+		prep_stmt->setString(1, idnumber);
+		rs = prep_stmt->executeQuery();
+		switch(rs->rowsCount())
+		{
+		case 0:
+			return MDLDB_NO_IDNUMBER;
+		case 1:
+			return rs->
+		default:
+			break;
+		}
+	} catch (SQLException& e)
+	{
+		
+	}
+}
+
+status_t MDLDB_Connector::attend(const string& idnumber)
+{
+	if (!this->is_valid())
+		throw MDLDB_Exception("[MDLDB]:Connection not completed", MDLDB_UNCOMPLT_CONNECTION);
+	sql::PreparedStatement *prep_stmt = NULL;
+	try{
+		this->connection->setSchema("moodle");
+		prep_stmt = this->connection->prepareStatement("INSERT INTO mdl_attendance_log \
+				(sessionid, studentid, statusid, statusset, timetaken, takenby)VALUES(?, ?, ?, ?, ?, ?)");
+		prep_stmt->setInt(1, this->course_id);// course_id
+		prep_stmt->setInt(2, "");				// studentid
+		prep_stmt->setInt(3, "");				// statusid
+		prep_stmt->setString(4, "");			// statusset
+		prep_stmt->setUInt(5, time(NULL));		// timetaken
+		prep_stmt->setUInt(6, 2);				// takeby
+		// 
+		
+	} catch(sql::SQLException& e){
+		cout << e.what() << endl;
+	}
+}
+

@@ -13,6 +13,8 @@
 
 using namespace std;
 
+typedef status_t int;
+
 const int MDLDB_CONNECTED           =  0;
 const int MDLDB_GENERAL_ERROR       = -1;
 
@@ -31,6 +33,10 @@ const int MDLDB_DUPLICATE_COURSE    = -8;
 const int MDLDB_NO_SESSION          = -9;
 const int MDLDB_SESSION_NOT_FOUND   = -10;
 const int MDLDB_DUPLICATE_SESSION   = -11;
+
+//IDNUMBER
+const int MDLDB_NO_IDNUMBER			= -1;
+const int MDLDB_ERROR_IDNUMBER		= -2;
 
 class MDLDB_Exception: public std::runtime_error
 {
