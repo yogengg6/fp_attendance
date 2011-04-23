@@ -28,21 +28,12 @@ MDLDB_Connector::MDLDB_Connector(const char * const db_host,
     this->dbconnect(db_host, db_user, db_passwd);
     if (this->status != MDLDB_CONNECTED)
         return;
-    #ifdef DEBUG
-    print_msg("MDLDB_Connector", "connection established.");
-    #endif
     this->associate_course(course_name);
     if (this->status != MDLDB_CONNECTED)
         return;
-    #ifdef DEBUG
-    print_msg("MDLDB_Connector", "course association success.");
-    #endif
     this->associate_session(session_name);
     if (this->status == MDLDB_CONNECTED)
         this->status = MDLDB_OK;
-    #ifdef DEBUG
-    print_msg("MDLDB_Connector", "session association success, connection established.");
-    #endif
 }
 
 MDLDB_Connector::~MDLDB_Connector(void)
@@ -65,15 +56,8 @@ status_t MDLDB_Connector::dbconnect(const char * const db_host,
         this->connection = this->driver->connect(db_host, db_user, db_passwd);
     } catch (sql::SQLException &e) {
         if (e.getErrorCode() == 10061) {
-#ifdef DEBUG
-            sprintf(stdout_buffer, "connect to %s fail", db_host);
-            print_msg("MDLDB_Connector", stdout_buffer);
-#endif
             this->status = MDLDB_CONNECTION_FAIL;
         } else if (e.getErrorCode() == 1045) {
-#ifdef DEBUG
-            print_msg("MDLDB_Connector", "connection refused");
-#endif
             this->status = MDLDB_CONNECTION_REFUSED;
         }
         return this->status;
