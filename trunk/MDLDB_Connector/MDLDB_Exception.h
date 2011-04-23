@@ -10,14 +10,15 @@
 
 using namespace std;
 
-const int MDLDB_OK                  =  0;
-const int MDLDB_CONNECTED           = -1;
-const int MDLDB_DISCONNECTED        = -2;
-const int MDLDB_UNKNOWN_ERROR       = -3;
-const int MDLDB_CONNECTION_FAIL     = -4;
-const int MDLDB_CONNECTION_REFUSED  = -5;
+const int MDLDB_CONNECTED           =  0;
+const int MDLDB_DISCONNECTED        = -1;
+const int MDLDB_UNKNOWN_ERROR       = -2;
+const int MDLDB_CONNECTION_FAIL     = -3;
+const int MDLDB_CONNECTION_REFUSED  = -4;
+
 const int MDLDB_NO_COURSE           = -6;
 const int MDLDB_DUPLICATE_COURSE    = -7;
+
 const int MDLDB_NO_SESSION          = -8;
 const int MDLDB_DUPLICATE_SESSION   = -9;
 
