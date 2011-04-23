@@ -1,8 +1,11 @@
 /**
- * Copyleft : This program is published under GPL
- * Author   : Yusuke
- * Email    : Qiuchengxuan@gmail.com
- * Date	    : 2011-4-22 21:18
+ * Project Name : FP_Attendance
+ * description  : a fingerprint based attendance(work with moodle attendanc
+ *                e module)
+ * Copyleft     : This program is published under GPL
+ * Author1      : Yusuke(Qiuchengxuan@gmail.com)
+ * Author2      : Edward(edward9092@gmail.com)
+ * Date	        : 2011-4-23 12:33
  */
 
 #include "MDLDB_Connector.h"
@@ -13,6 +16,10 @@ MDLDB_Connector::MDLDB_Connector(void)
 	this->connection = NULL;
     this->driver = sql::mysql::get_driver_instance();
 }
+/**
+ * this constructor only do call dbconnect, associate_course,
+ * associate_session and deal with exceptions
+ */
 MDLDB_Connector::MDLDB_Connector(const char * const db_host,
                                  const char * const db_user,
                                  const char * const db_passwd,

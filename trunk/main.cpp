@@ -1,3 +1,13 @@
+/**
+ * Project Name : FP_Attendance
+ * description  : a fingerprint based attendance(work with moodle attendanc
+ *                e module)
+ * Copyleft     : This program is published under GPL
+ * Author1      : Yusuke(Qiuchengxuan@gmail.com)
+ * Author2      : Edward(edward9092@gmail.com)
+ * Date	        : 2011-4-23 12:33
+ */
+
 #include <ctime>
 
 #include <mysql_connection.h>
@@ -18,6 +28,8 @@ int main()
     string session  = "";
     try {
         MDLDB_Connector conn(db_host, db_user, db_passwd, course, session);
+        if (conn.is_valid())
+            cout << "connect to database success" << endl;
     } catch (MDLDB_Exception) {
     }
 	return 0;  

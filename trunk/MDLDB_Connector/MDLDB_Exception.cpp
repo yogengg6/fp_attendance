@@ -1,8 +1,11 @@
 /**
- * Copyleft : This program is published under GPL
- * Author   : Yusuke
- * Email    : Qiuchengxuan@gmail.com
- * Date	    : 2011-4-22 21:18
+ * Project Name : FP_Attendance
+ * description  : a fingerprint based attendance(work with moodle attendanc
+ *                e module)
+ * Copyleft     : This program is published under GPL
+ * Author1      : Yusuke(Qiuchengxuan@gmail.com)
+ * Author2      : Edward(edward9092@gmail.com)
+ * Date	        : 2011-4-23 12:33
  */
 
 #include "MDLDB_Exception.h"
