@@ -23,24 +23,10 @@
 #include <cppconn/prepared_statement.h>
 #include <cppconn/exception.h>
 
-#include "../common.h"
-
-#ifndef FPA_COMMON
-typedef int status_t;
-#endif
+#include "MDLDB_Exception.h"
 
 using namespace std;
 
-const status_t MDLDB_OK                  =  0;
-const status_t MDLDB_CONNECTED           = -1;
-const status_t MDLDB_DISCONNECTED        = -2;
-const status_t MDLDB_UNKNOWN_ERROR       = -3;
-const status_t MDLDB_CONNECTION_FAIL     = -4;
-const status_t MDLDB_CONNECTION_REFUSED  = -5;
-const status_t MDLDB_NO_COURSE           = -6;
-const status_t MDLDB_DUPLICATE_COURSE    = -7;
-const status_t MDLDB_NO_SESSION          = -8;
-const status_t MDLDB_DUPLICATE_SESSION   = -9;
 const time_t   THERE_HOURS               =  3 * 60 * 60; 
 
 class MDLDB_Connector
@@ -54,20 +40,20 @@ public:
                     const string session_name
                     );
     ~MDLDB_Connector(void);
-    status_t dbconnect(const char * const db_host,
+    int dbconnect(const char * const db_host,
                        const char * const db_user,
                        const char * const db_passwd
-                       );
-    status_t associate_course(const string course_name);
-    status_t associate_session(const string session_name);
-    status_t get_status(){return this->status;};
+                       )
+                       throw(MDLDB_Exception);
+    int associate_course(const string course_name);
+    int associate_session(const string session_name);
+    int get_status() const {return this->status;};
 protected:
 private:
     uint32_t course_id;
     uint32_t session_id;
-    status_t status;
+    int status;
     sql::Statement *statement;
     sql::Connection *connection;
     sql::mysql::MySQL_Driver *driver;
 };
-
