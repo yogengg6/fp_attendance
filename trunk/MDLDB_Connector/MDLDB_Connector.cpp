@@ -73,6 +73,8 @@ bool MDLDB_Connector::dbconnect(const char * const db_host,
  */
 bool MDLDB_Connector::associate_course(const string course_name) throw(MDLDB_Exception)
 {
+    if (!this->connection_established())
+        throw MDLDB_Exception("connection not established", MDLDB_DISCONNECTED);
     sql::PreparedStatement *prep_stmt = NULL;
     sql::ResultSet *rs = NULL;
     try {
@@ -81,14 +83,14 @@ bool MDLDB_Connector::associate_course(const string course_name) throw(MDLDB_Exc
         rs = prep_stmt->executeQuery();
         switch (rs->rowsCount()) {
         case 0:
-            throw MDLDB_Exception("[MDLDB]:course not found", MDLDB_NO_COURSE);
+            throw MDLDB_Exception("[MDLDB]:course not found", MDLDB_COURSE_NOT_FOUND);
             break;
         case 1:
             rs->next();
             this->course_id = rs->getInt("id");
             break;
         default:
-            throw MDLDB_Exception("[MDLDB]:duplicate course", MDLDB_NO_COURSE);
+            throw MDLDB_Exception("[MDLDB]:duplicate course", MDLDB_DUPLICATE_COURSE);
             break;
         }
         delete rs;
@@ -113,21 +115,22 @@ bool MDLDB_Connector::associate_session(const string session_name) throw(MDLDB_E
     if (!this->connection_established())
         throw MDLDB_Exception("connection not established", MDLDB_DISCONNECTED);
     if (!this->course_associated())
-        throw MDLDB_Exception("course not associated", MDLDB_NO_SESSION);
+        throw MDLDB_Exception("course not associated", MDLDB_NO_COURSE);
     time_t now = time(NULL);
     static char now_str[80];
     sql::PreparedStatement *prep_stmt = NULL;
     sql::ResultSet *rs = NULL;
-    static const char* prep_sql = "SELECT id FROM mdl_attendance_sessions WHERE description=? AND ? BETWEEN sessdate AND sessdate + duration";
+    static const char* prep_sql = "SELECT id FROM mdl_attendance_sessions WHERE courseid=? AND description=? AND ? BETWEEN sessdate AND sessdate + duration";
     try {
         prep_stmt = this->connection->prepareStatement(prep_sql);
-        prep_stmt->setString(1, session_name);
+        prep_stmt->setInt(1, this->course_id);
+        prep_stmt->setString(2, session_name);
         sprintf_s(now_str, "%lld", now + BEFORE_CLASS_BEGIN);
-        prep_stmt->setBigInt(2, string(now_str));
+        prep_stmt->setBigInt(3, string(now_str));
         rs = prep_stmt->executeQuery();
         switch (rs->rowsCount()) {
         case 0:
-            throw MDLDB_Exception("[MDLDB]:session not found", MDLDB_NO_SESSION);
+            throw MDLDB_Exception("[MDLDB]:session not found", MDLDB_SESSION_NOT_FOUND);
             break;
         case 1:
             rs->next();

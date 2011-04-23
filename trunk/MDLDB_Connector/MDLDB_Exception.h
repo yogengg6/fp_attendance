@@ -16,11 +16,13 @@ const int MDLDB_UNKNOWN_ERROR       = -2;
 const int MDLDB_CONNECTION_FAIL     = -3;
 const int MDLDB_CONNECTION_REFUSED  = -4;
 
-const int MDLDB_NO_COURSE           = -6;
+const int MDLDB_NO_COURSE           = -5;
+const int MDLDB_COURSE_NOT_FOUND    = -6;
 const int MDLDB_DUPLICATE_COURSE    = -7;
 
 const int MDLDB_NO_SESSION          = -8;
-const int MDLDB_DUPLICATE_SESSION   = -9;
+const int MDLDB_SESSION_NOT_FOUND   = -9;
+const int MDLDB_DUPLICATE_SESSION   = -10;
 
 class MDLDB_Exception: public std::runtime_error
 {
