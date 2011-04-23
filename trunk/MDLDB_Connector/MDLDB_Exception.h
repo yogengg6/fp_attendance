@@ -36,7 +36,7 @@ const int MDLDB_DUPLICATE_SESSION   = -11;
 
 //IDNUMBER
 const int MDLDB_NO_IDNUMBER			= -1;
-const int MDLDB_ERROR_IDNUMBER		= -2;
+const int MDLDB_MULITY_IDNUMBER		= -2;
 
 class MDLDB_Exception: public std::runtime_error
 {
