@@ -190,13 +190,16 @@ int MDLDB_Connector::get_uid(const string& idnumber)
 		case 0:
 			return MDLDB_NO_IDNUMBER;
 		case 1:
-			return rs->
+			while(rs->next()){
+				return rs->getInt("id");
+			}
 		default:
+			return MDLDB_ERROR_IDNUMBER;
 			break;
 		}
-	} catch (SQLException& e)
+	} catch (sql::SQLException& e)
 	{
-		
+		cout << e.what() << endl;
 	}
 }
 
