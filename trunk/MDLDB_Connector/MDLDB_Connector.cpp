@@ -10,15 +10,10 @@
 
 #include "MDLDB_Connector.h"
 
-MDLDB_Connector::MDLDB_Connector(void)
-{
-	this->statement = NULL;
-	this->connection = NULL;
-    this->driver = sql::mysql::get_driver_instance();
-}
 /**
  * this constructor only do call dbconnect, associate_course,
- * associate_session and deal with exceptions
+ * associate_session and deal with exceptions. So that when you're
+ * attempting take attendance, use it.
  */
 MDLDB_Connector::MDLDB_Connector(const char * const db_host,
                                  const char * const db_user,
@@ -35,10 +30,39 @@ MDLDB_Connector::MDLDB_Connector(const char * const db_host,
         this->associate_course(course_name);
         this->associate_session(session_name);
     } catch (MDLDB_Exception& e) {
+        cout << e.what() << endl;
         delete this->statement;
         delete this->connection;
         throw;
     }
+}
+
+/**
+ * this constructor only call dbconnect, and deal with exceptions.
+ * So that when you're attempting enroll student fingerprint, use it.
+ */
+MDLDB_Connector::MDLDB_Connector(const char * const db_host,
+                                 const char * const db_user,
+                                 const char * const db_passwd
+                                 )
+{
+    this->statement = NULL;
+    this->connection = NULL;
+    this->driver = sql::mysql::get_driver_instance();
+    try {
+        this->dbconnect(db_host, db_user, db_passwd);
+    } catch (MDLDB_Exception& e) {
+        delete this->statement;
+        delete this->connection;
+        throw;
+    }
+}
+
+MDLDB_Connector::MDLDB_Connector(void)
+{
+    this->statement = NULL;
+    this->connection = NULL;
+    this->driver = sql::mysql::get_driver_instance();
 }
 
 MDLDB_Connector::~MDLDB_Connector(void)
@@ -77,7 +101,7 @@ bool MDLDB_Connector::dbconnect(const char * const db_host,
 /**
  * check and get course_id from mdl_course
  */
-bool MDLDB_Connector::associate_course(const string course_name) throw(MDLDB_Exception)
+bool MDLDB_Connector::associate_course(const string course) throw(MDLDB_Exception)
 {
     if (!this->connection_established())
         throw MDLDB_Exception("[MDLDB]:Connection not established", MDLDB_DISCONNECTED);
@@ -86,7 +110,7 @@ bool MDLDB_Connector::associate_course(const string course_name) throw(MDLDB_Exc
     try {
         this->connection->setSchema("moodle");
         prep_stmt = this->connection->prepareStatement("SELECT id FROM mdl_course WHERE fullname=?");
-        prep_stmt->setString(1, course_name);
+        prep_stmt->setString(1, course);
         rs = prep_stmt->executeQuery();
         switch (rs->rowsCount()) {
         case 0:
@@ -116,7 +140,7 @@ bool MDLDB_Connector::associate_course(const string course_name) throw(MDLDB_Exc
  * check and get session_id from mdl_attendance
  * notice that session
  */
-bool MDLDB_Connector::associate_session(const string session_name) throw(MDLDB_Exception)
+bool MDLDB_Connector::associate_session(const string session) throw(MDLDB_Exception)
 {
     if (!this->connection_established())
         throw MDLDB_Exception("connection not established", MDLDB_DISCONNECTED);
@@ -131,7 +155,7 @@ bool MDLDB_Connector::associate_session(const string session_name) throw(MDLDB_E
         this->connection->setSchema("moodle");
         prep_stmt = this->connection->prepareStatement(prep_sql);
         prep_stmt->setInt(1, this->course_id);
-        prep_stmt->setString(2, session_name);
+        prep_stmt->setString(2, session);
         sprintf_s(now_str, "%lld", now + BEFORE_CLASS_BEGIN);
         prep_stmt->setBigInt(3, string(now_str));
         rs = prep_stmt->executeQuery();
@@ -159,80 +183,41 @@ bool MDLDB_Connector::associate_session(const string session_name) throw(MDLDB_E
     return this->session_id > 0;
 }
 
-bool MDLDB_Connector::enroll(const string &idnumber, const uint16_t* const finger_print_data)
+/**
+ * enroll student fingerprint data to student info database.
+ * 
+ */
+
+bool MDLDB_Connector::enroll(const string &idnumber,
+                             const unsigned char * const fingerprint_data,
+                             size_t fingerprint_size)
 {
-    if (!this->is_valid())
-        throw MDLDB_Exception("[MDLDB]:Connection not completed", MDLDB_UNCOMPLT_CONNECTION);
+    if (!this->connection_established())
+        throw MDLDB_Exception("[MDLDB]:Connection not established", MDLDB_UNCOMPLT_CONNECTION);
     sql::PreparedStatement *prep_stmt = NULL;
+    static const char* sql = "UPDATE info SET fingerprint_data=?, fingerprint_size=? where idnumber=?";
     try {
         this->connection->setSchema("student");
-        prep_stmt = this->connection->prepareStatement("UPDATE info SET fpdata = ? where idnumber=?");
-        prep_stmt->setBlob(1, finger_print_data);
+        prep_stmt = this->connection->prepareStatement(sql);
+        std::string value(fingerprint_data, fingerprint_size);
+        std::istringstream blob_stream(value);
+        prep_stmt->setBlob(1, blob_stream);
         prep_stmt->setString(2, idnumber);
     } catch(sql::SQLException& e) {
         cout << e.what() << endl;
     }
 }
-
-int MDLDB_Connector::get_uid(const string& idnumber)
+bool MDLDB_Connector::get_all_info()
 {
-	if (!this->is_valid())
-		throw MDLDB_Exception("[MDLDB]:Connection not completed", MDLDB_UNCOMPLT_CONNECTION);
-	sql::PreparedStatement *prep_stmt = NULL;
-	sql::ResultSet *rs = NULL;
-	try {
-		this->connection->setSchema("moodle");
-		prep_stmt = this->connection->prepareStatement("SELECT id FROM mdl_user WHERE idnumber = ?");
-		prep_stmt->setString(1, idnumber);
-		rs = prep_stmt->executeQuery();
-		switch(rs->rowsCount())
-		{
-		case 0:
-			return MDLDB_NO_IDNUMBER;
-		case 1:
-			while(rs->next()){
-				return rs->getInt("id");
-			}
-		default:
-			return MDLDB_MULITY_IDNUMBER;
-			break;
-		}
-	} catch (sql::SQLException& e)
-	{
-		cout << e.what() << endl;
-	}
-}
+    if (!this->is_valid())
+        throw MDLDB_Exception("[MDLDB]:Connection not completed", MDLDB_UNCOMPLT_CONNECTION);
+    sql::PreparedStatement *prep_stmt = NULL;
+    static const char *sql = "SELECT idnumber, fingerprint_data, fingerprint_size FROM info WHERE";
+    try {
+        this->connection->setSchema("student");
+        prep_stmt = this->connection->prepareStatement(sql);
 
-status_t MDLDB_Connector::attend(const string& idnumber)
-{
-	if (!this->is_valid())
-		throw MDLDB_Exception("[MDLDB]:Connection not completed", MDLDB_UNCOMPLT_CONNECTION);
-	sql::PreparedStatement *prep_stmt = NULL;
-	try{
-		int studentid = this->get_uid(idnumber);
-		if(MDLDB_NO_IDNUMBER==studentid)
-		{
-			throw MDLDB_Exception("[MDLDB]:MDLDB_NO_IDNUMBER", idnumber);
-		}
-		else if(MDLDB_MULITY_IDNUMBER==studentid)
-		{
-			throw MDLDB_Exception("[MDLDB]:MDLDB_MULITY_IDNUMBER", studentid);
-		}
-		this->connection->setSchema("moodle");
-		prep_stmt = this->connection->prepareStatement("INSERT INTO mdl_attendance_log \
-				(sessionid, studentid, statusid, statusset, timetaken, takenby)VALUES(?, ?, ?, ?, ?, ?)");
-		prep_stmt->setInt(1, this->course_id);	// course_id
-		prep_stmt->setInt(2, studentid);		// studentid
-		prep_stmt->setInt(3, "");				// statusid
-		prep_stmt->setString(4, this->statusset);// statusset
-		prep_stmt->setUInt(5, time(NULL));		// timetaken
-		prep_stmt->setUInt(6, 2);				// takeby
-		// 
-		
-	} catch(sql::SQLException& e){
-		cout << e.what() << endl;
-	} catch(MDLDB_Exception& e) {
-		throw e;
-	}
+    } catch(sql::SQLException& e) {
+        cout << e.what() << endl;
+    }
 }
-

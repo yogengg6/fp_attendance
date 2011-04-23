@@ -26,7 +26,6 @@
 #include <cppconn/exception.h>
 
 #include "MDLDB_Exception.h"
-#include "student_info.h"
 
 #ifdef __GNUC__
 #define sprintf_s(buffer, format, ...) sprintf(buffer, format, __VA_ARGS__)
@@ -35,6 +34,13 @@
 using namespace std;
 
 const time_t  BEFORE_CLASS_BEGIN =  10 * 60 - 1;
+
+typedef struct student_info 
+{
+    string idnumber;
+    unsigned int fingerprint_size;
+    unsigned char* fingerprint_data;
+}student_info_t;
 
 class MDLDB_Connector
 {
@@ -55,11 +61,10 @@ public:
                    throw(MDLDB_Exception);
     bool associate_course(const string course_name) throw(MDLDB_Exception);
     bool associate_session(const string session_name) throw(MDLDB_Exception);
-    bool enroll(const string& idnumber, const uint16_t* const finger_print_data);
-	status_t attend(const string& idnumber);
-	int get_all_info(student_info_t *si);
-	int get_uid(const string& idnumber);
-
+    bool enroll(const string &idnumber,
+                const unsigned char * const fingerprint_data,
+                size_t fingerprint_size);
+    bool get_all_info();
     inline bool connection_established() const {return this->connection != NULL;}
     inline bool course_associated() const {return this->course_id > 0;}
     inline bool session_associated() const {return this->session_id > 0;}
