@@ -13,7 +13,7 @@
 /**
  * this constructor only do call dbconnect, associate_course,
  * associate_session and deal with exceptions. So that when you're
- * attempting take attendance, use it.
+ * attempting take attendance, just use it.
  */
 MDLDB_Connector::MDLDB_Connector(const char * const db_host,
                                  const char * const db_user,
@@ -39,7 +39,7 @@ MDLDB_Connector::MDLDB_Connector(const char * const db_host,
 
 /**
  * this constructor only call dbconnect, and deal with exceptions.
- * So that when you're attempting enroll student fingerprint, use it.
+ * So that when you're attempting enroll student fingerprint, just use it.
  */
 MDLDB_Connector::MDLDB_Connector(const char * const db_host,
                                  const char * const db_user,
@@ -138,7 +138,7 @@ bool MDLDB_Connector::associate_course(const string course) throw(MDLDB_Exceptio
 
 /**
  * check and get session_id from mdl_attendance
- * notice that session
+ * notice that session maybe duplicate
  */
 bool MDLDB_Connector::associate_session(const string session) throw(MDLDB_Exception)
 {
@@ -184,7 +184,7 @@ bool MDLDB_Connector::associate_session(const string session) throw(MDLDB_Except
 }
 
 /**
- * enroll student fingerprint data to student info database.
+ * enroll student fingerprint data to database.
  * 
  */
 
@@ -201,12 +201,15 @@ bool MDLDB_Connector::enroll(const string &idnumber,
         prep_stmt = this->connection->prepareStatement(sql);
         std::string value(fingerprint_data, fingerprint_size);
         std::istringstream blob_stream(value);
-        prep_stmt->setBlob(1, blob_stream);
+        prep_stmt->setBlob(1, &blob_stream);
         prep_stmt->setString(2, idnumber);
     } catch(sql::SQLException& e) {
         cout << e.what() << endl;
     }
 }
+/**
+ * get student info(including idnumber, fingerprint data) from database to local
+ */
 bool MDLDB_Connector::get_all_info()
 {
     if (!this->is_valid())
