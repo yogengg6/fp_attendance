@@ -27,7 +27,7 @@ int main()
     string course   = "C/C++语言程序设计";
     string session  = "";
     try {
-        MDLDB_Connector conn(db_host, db_user, db_passwd, course, session);
+        MDLDB_Connector conn(db_host, db_user, db_passwd);
         if (conn.is_valid())
             cout << "connect to database success" << endl;
     } catch (MDLDB_Exception& e) {
