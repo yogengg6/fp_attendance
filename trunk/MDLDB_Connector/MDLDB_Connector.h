@@ -17,6 +17,7 @@
 
 //c++ header
 #include <iostream>
+#include <string>
 
 //mysql header
 #include <mysql_driver.h>
@@ -40,71 +41,55 @@ typedef struct student_info
     string idnumber;
     unsigned int fingerprint_size;
     unsigned char* fingerprint_data;
-} student_info_t;
+}student_info_t;
 
 class MDLDB_Connector
 {
 public:
-    MDLDB_Connector(void) throw(MDLDB_Exception);
-
-    /**
-     * connect database and associate course and session
-     * notice that session_name is session full name
-     */
+    MDLDB_Connector(void);
+    //notice that session_name is session fullname
     MDLDB_Connector(const char * const db_host,
                     const char * const db_user,
                     const char * const db_passwd,
                     const string course_name,
                     const string session_name
-                    ) throw(MDLDB_Exception);
-
-    // connect to database
-    MDLDB_Connector(const char * const db_host,
-                    const char * const db_user,
-                    const char * const db_passwd
-                    ) throw(MDLDB_Exception);
-
+                    );
+	MDLDB_Connector(const char * const db_host,
+					const char * const db_user,
+					const char * const db_passwd
+					);
     ~MDLDB_Connector(void);
-
     bool dbconnect(const char * const db_host,
                    const char * const db_user,
                    const char * const db_passwd
                    ) throw(MDLDB_Exception);
-
     bool associate_course(const string course_name) throw(MDLDB_Exception);
-
     bool associate_session(const string session_name) throw(MDLDB_Exception);
-
     bool enroll(const string &idnumber,
-                const char* const fingerprint_data,
-                const size_t fingerprint_size
-                ) throw(MDLDB_Exception);
+                char * fingerprint_data,
+                size_t fingerprint_size);
 
-    bool get_all_info(const string class1 = "", const string class2 = "") const;
-
-    inline bool connection_established() const {return this->connection.get() != NULL;}
-
+    bool get_all_info();
+    inline bool connection_established() const {return this->connection != NULL;}
     inline bool course_associated() const {return this->course_id > 0;}
-
     inline bool session_associated() const {return this->session_id > 0;}
-
     inline bool is_valid() const
     {
-        return  (this->connection.get() != NULL) && (this->course_id > 0) && (this->session_id > 0);
+        return  (this->connection != NULL) && (this->course_id > 0) && (this->session_id > 0);
     }
-
 protected:
     uint32_t course_id;
     uint32_t session_id;
-    auto_ptr<sql::Statement> stmt;
-    auto_ptr<sql::Connection> connection;
-    auto_ptr<sql::mysql::MySQL_Driver> driver;
+    sql::Statement *statement;
+    sql::Connection *connection;
+    sql::mysql::MySQL_Driver *driver;
 };
 
-class DataBuf : public streambuf
+
+class DataBuf  : public streambuf
 {
 public:
-    DataBuf(char* d, const size_t s) {
-        setg(d, d, d + s);
-    }
+	DataBuf (char * d, size_t s) {
+		setg(d, d, d + s);
+	}
 };
