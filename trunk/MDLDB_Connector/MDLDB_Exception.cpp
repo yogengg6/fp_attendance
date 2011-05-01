@@ -4,7 +4,7 @@
  *                e module)
  * Copyleft     : This program is published under GPL
  * Author1      : Yusuke(Qiuchengxuan@gmail.com)
- * Author2      : Edward(edward9092@gmail.com)
+ * Author2      : Edward(Edward.zhw@gmail.com)
  * Date	        : 2011-4-23 12:33
  */
 
