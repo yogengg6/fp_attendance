@@ -1,0 +1,6 @@
+﻿mdl_attendance_log:
+id sessionid studentid(user_id) statusid(student's status) statusset(available status referred to course_id) timetaken(time) takenby(user_id) remarks(description)
+mdl_attendance_sessions:
+id courseid(course_id) sessdate duration(second) lasttaken(time) lasttakenby(userid) timemodified(time) description(session_name)
+mdl_attendance_status:
+id courseid(course_id) acronym(echo of status) description(description of status) grade(student's score) visible deleted
