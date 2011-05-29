@@ -23,6 +23,7 @@ WCHAR CEntryDlg::m_convWchBuf[200];
 
 CEntryDlg::CEntryDlg(mdldb::Connector& conn, CWnd* pParent /*=NULL*/)
 	:	CDialog(CEntryDlg::IDD, pParent), m_conn(conn),
+		m_nextButton(NULL),
 		m_courseComboBox(NULL),
 		m_sessionComboBox(NULL)
 {
@@ -52,6 +53,7 @@ BOOL CEntryDlg::OnInitDialog()
 	if (! m_conn.connected())
 		return FALSE;
 
+	m_nextButton	  = (CButton *)	 GetDlgItem(ID_NEXT);
 	m_courseComboBox  = (CComboBox*) GetDlgItem(IDC_COURSE);
 	m_sessionComboBox = (CComboBox*) GetDlgItem(IDC_SESSION);
 
@@ -79,36 +81,12 @@ BEGIN_MESSAGE_MAP(CEntryDlg, CDialog)
 	ON_CBN_SELENDOK(IDC_SESSION, &CEntryDlg::OnCbnSelendokSession)
 	ON_BN_CLICKED(IDC_ATTENDANT, &CEntryDlg::OnBnClickedAttendant)
 	ON_BN_CLICKED(IDC_REGISTER, &CEntryDlg::OnBnClickedRegister)
+	ON_CBN_SELCHANGE(IDC_COURSE, &CEntryDlg::OnCbnSelchangeCourse)
+	ON_CBN_SETFOCUS(IDC_SESSION, &CEntryDlg::OnCbnSetfocusSession)
 END_MESSAGE_MAP()
 
 
 // CEntryDlg 消息处理程序
-
-void CEntryDlg::OnCbnSelendokCourse()
-{
-	int index = m_courseComboBox->GetCurSel();
-	m_conn.associate_course(m_courseInfo[index].id);
-
-	m_sessionComboBox->Clear();
-
-	try {
-		m_session = m_conn.get_session_discription(  );
-	} catch (mdldb::MDLDB_Exception& e) {
-		MessageBox(CString(e.what()), L"数据库连接");
-	}
-
-	for (vector<string>::iterator it = m_session.begin(); it != m_session.end(); ++it) {
-		MultiByteToWideChar(CP_UTF8, NULL, it->c_str(), -1, m_convWchBuf, it->length());
-		m_sessionComboBox->AddString(CString(m_convWchBuf));
-
-	}
-}
-
-void CEntryDlg::OnCbnSelendokSession()
-{
-	int index = m_sessionComboBox->GetCurSel();
-	m_conn.associate_session(m_session[index]);
-}
 
 void CEntryDlg::OnBnClickedNext()
 {
@@ -132,7 +110,6 @@ void CEntryDlg::OnBnClickedNext()
 			else
 				this->ShowWindow(SW_SHOW);
 			break;
-			break;
 		}
 	default:
 			break;
@@ -145,12 +122,52 @@ void CEntryDlg::OnBnClickedExit()
 }
 void CEntryDlg::OnBnClickedAttendant()
 {
-	m_sessionComboBox->EnableWindow(TRUE);
 	m_courseComboBox->EnableWindow(TRUE);
+	if (m_conn.course_associated())
+		m_sessionComboBox->EnableWindow(TRUE);
+	if (m_conn.session_associated())
+		m_nextButton->EnableWindow(TRUE);
+	else
+		m_nextButton->EnableWindow(FALSE);
 }
 
 void CEntryDlg::OnBnClickedRegister()
 {
-	m_sessionComboBox->EnableWindow(FALSE);
+	m_nextButton->EnableWindow(TRUE);
 	m_courseComboBox->EnableWindow(FALSE);
+	m_sessionComboBox->EnableWindow(FALSE);
+}
+
+void CEntryDlg::OnCbnSelendokCourse()
+{
+	int index = m_courseComboBox->GetCurSel();
+	m_conn.associate_course(m_courseInfo[index].id);
+}
+
+void CEntryDlg::OnCbnSelendokSession()
+{
+	int index = m_sessionComboBox->GetCurSel();
+	m_conn.associate_session(m_session[index]);
+	m_nextButton->EnableWindow(TRUE);
+}
+
+void CEntryDlg::OnCbnSelchangeCourse()
+{
+	m_sessionComboBox->EnableWindow(TRUE);
+}
+
+void CEntryDlg::OnCbnSetfocusSession()
+{
+	m_sessionComboBox->Clear();
+
+	try {
+		m_session = m_conn.get_session_discription(  );
+	} catch (mdldb::MDLDB_Exception& e) {
+		MessageBox(CString(e.what()), L"数据库连接");
+	}
+
+	for (vector<string>::iterator it = m_session.begin(); it != m_session.end(); ++it) {
+		MultiByteToWideChar(CP_UTF8, NULL, it->c_str(), -1, m_convWchBuf, it->length());
+		m_sessionComboBox->AddString(CString(m_convWchBuf));
+	}
 }

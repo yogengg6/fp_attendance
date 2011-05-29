@@ -35,6 +35,8 @@ namespace mdldb{
 						 )
 	{
 		m_sess_info.lasttakenby = 2; // 管理员点名
+		m_course_id = 0;
+		::ZeroMemory(&m_sess_info, sizeof(SessionInfo));
 		try {
 			if (m_driver.get() == NULL)
 				m_driver = std::auto_ptr<sql::mysql::MySQL_Driver>(sql::mysql::get_driver_instance());
@@ -54,6 +56,8 @@ namespace mdldb{
 
 	Connector::Connector(void)
 	{
+		m_course_id = 0;
+		::ZeroMemory(&m_sess_info, sizeof(SessionInfo));
 		if (m_driver.get() == NULL)
 			m_driver = std::auto_ptr<sql::mysql::MySQL_Driver>(sql::mysql::get_driver_instance());
 	}
@@ -244,21 +248,23 @@ namespace mdldb{
 		if (!connected())
 			throw MDLDB_Exception("没有连接到数据库", MDLDB_DISCONNECTED);
 
-		static const char* sql = "UPDATE info SET fp_data=?, fp_size=? WHERE idnumber=?";
+		const char* sql = "UPDATE info SET fp_data=?, fp_size=? WHERE idnumber=?";
 
 		try {
 			m_connection->setSchema("student");
 
-			std::auto_ptr<sql::PreparedStatement>prep_stmt(m_connection->prepareStatement(sql));
+			std::auto_ptr<sql::PreparedStatement> 
+				prep_stmt(m_connection->prepareStatement(sql));
 
 			std::string buffer((char*)stu_info.get_fpdata(), stu_info.get_fpsize() * sizeof(byte));
 
 			std::istringstream str_stream(buffer);
 
 			prep_stmt->setBlob(1, &str_stream);
-			prep_stmt->setInt(2, stu_info.get_fpsize());
+			prep_stmt->setUInt(2, stu_info.get_fpsize());
 			prep_stmt->setString(3, stu_info.get_idnumber());
 			prep_stmt->executeUpdate();
+
 		} catch(sql::SQLException& e) {
 			throw MDLDB_Exception(e.what(), MDLDB_GENERAL_ERROR);
 		}
@@ -282,41 +288,38 @@ namespace mdldb{
 	/**
 	 * 获取课程所有的学生指纹
 	 * 1.先根据courseid获取contextid:
-	 *		SELECT id FROM mdl_context WHERE instanceid=courseid
 	 * 2.根据contextid得到课程所有学生的fpdata和fpsize(roleid为5代表学生)
-	 *		SELECT i.fpdata, i.fpsize
-	 *			FROM mdl_user u, mdl_role_assignments r student.info i 
-	 *			WHERE u.id = r.userid AND r.contextid=contextid 
-	 *				AND r.roleid=5 AND u.idnumber=i.idnumber;
 	 */
-
-	std::vector<StudentInfo> Connector::get_course_student_info(uint32_t courseid) const
+	void Connector::get_course_student_info(std::vector<StudentInfo> &student_info)
 	{
 		if (!connected())
 			throw MDLDB_Exception("没有连接到数据库", MDLDB_DISCONNECTED);
 
-		if (courseid == 0)
-			courseid = m_course_id;
-
+		/**
+		 * contextlevel = 50意味着选择的是课程的实例
+		 * moodle中如此定义：define('CONTEXT_COURSE', 50);
+		 */
 		const char* prep_stmt_context = 
-			"SELECT id FROM mdl_context WHERE instanceid=?";
+			"SELECT id FROM mdl_context WHERE instanceid=? AND contextlevel=50";
 		const char* prep_stmt_fpinfo = 
-			"SELECT u.idnumber, u.fullname, i.fpdata, i.fpsize \
-				FROM mdl_user u, mdl_role_assignments r student.info i \
-				WHERE u.id = r.userid AND r.contextid=? \
-					AND r.roleid=5 AND u.idnumber=i.idnumber";
+			"SELECT idnumber, fullname, fp_size, fp_data\
+				FROM student.info WHERE idnumber IN \
+				(SELECT u.idnumber \
+					FROM moodle.mdl_user AS u, moodle.mdl_role_assignments AS ra \
+					WHERE ra.contextid=? AND ra.roleid=5 AND u.id=ra.userid)";
 
 		try {
 
 			//获取moodle课程的context
-			m_connection->setSchema("student");
+			m_connection->setSchema("moodle");
 
-			std::auto_ptr<sql::PreparedStatement> prep_stmt(m_connection->prepareStatement(prep_stmt_context));
-			prep_stmt->setUInt(1, courseid);
+			std::auto_ptr<sql::PreparedStatement> 
+				prep_stmt(m_connection->prepareStatement(prep_stmt_context));
+			prep_stmt->setUInt(1, m_course_id);
 
 			std::auto_ptr<sql::ResultSet> rs(prep_stmt->executeQuery());
 			if (rs->rowsCount() != 1)
-				throw MDLDB_Exception("内部错误", MDLDB_GENERAL_ERROR);
+				throw MDLDB_Exception("会话不唯一", MDLDB_GENERAL_ERROR);
 			rs->next();
 			uint32_t contextid = rs->getUInt("id");
 			rs.release();
@@ -329,34 +332,36 @@ namespace mdldb{
 
 			rs = std::auto_ptr<sql::ResultSet>(prep_stmt->executeQuery());
 
-			std::vector<StudentInfo> student_info(rs->rowsCount());
+			if (rs->rowsCount() == 0) {
+				throw MDLDB_Exception("该课程没有人选修！", MDLDB_GENERAL_ERROR);
+			}
 
+			student_info = std::vector<StudentInfo>(rs->rowsCount());
 			std::vector<StudentInfo>::iterator stu_info_it = student_info.begin();
-			
+
 			while (rs->next()) {
+				const size_t fpsize = rs->getUInt("fp_size");
+// 				if (fpsize == 0)
+// 					throw MDLDB_Exception("存在已选课但是没有指纹的学生！", MDLDB_GENERAL_ERROR);
+				std::istream * is = rs->getBlob("fp_data");
+				byte* fpdata = NULL;
+				if (fpsize != 0) {
+					fpdata = new byte[fpsize];
+					is->read((char*)fpdata, fpsize);
+				}
+
+				stu_info_it->set_fpdata(fpsize, fpdata);
 				stu_info_it->set_idnumber(rs->getString("idnumber"));
-
 				stu_info_it->set_fullname(rs->getString("fullname"));
-
-				const size_t fpsize = rs->getInt("fpsize");
-				stu_info_it->set_fpsize(fpsize);
-
-				byte* fpdata = new byte[fpsize];
-				std::istream * is = rs->getBlob("fpdata");
-				*is >> const_cast<byte*>(fpdata);
-				stu_info_it->set_fpdata(fpdata);
-
 				stu_info_it++;
 			}
 
-			return student_info;
-
 		} catch(sql::SQLException& e) {
-			throw;
+			throw MDLDB_Exception(e.what(), e.getErrorCode());
 		}
-		return std::vector<StudentInfo>();
 	}
 
+	//只获取信息，不获取指纹
 	StudentInfo Connector::get_student_info(const std::string& idnumber)
 	{
 		if (!connected())
@@ -380,7 +385,7 @@ namespace mdldb{
 				static char conv_buf_ch[100];
 				static wchar_t conv_buf_wch[100];
 
-				return StudentInfo(idnumber, fullname, fpsize);
+				return StudentInfo(idnumber, fullname, fpsize, NULL);
 			} else {
 				throw MDLDB_Exception("student not found", MDLDB_STUDENT_NOT_FOUND);
 			}

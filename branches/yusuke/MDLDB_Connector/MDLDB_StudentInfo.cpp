@@ -5,41 +5,27 @@ namespace mdldb
 {
 	StudentInfo::StudentInfo()
 	{
-		this->idnumber = "";
-		this->fullname = "";
-
-		this->fpdata = NULL;
-		this->fpsize = 0;
+		m_idnumber = "";
+		m_fullname = "";
+		m_fpsize = 0;
+		m_fpdata = NULL;
 	}
 
-	StudentInfo::StudentInfo(const std::string& idnumber, 
-							 const std::string& fullname, 
-							 const size_t  fpsize)
+	StudentInfo::StudentInfo(const std::string&		idnumber, 
+							 const std::string&		fullname, 
+							 const size_t			fpsize, 
+							 const byte*			fpdata)
 	{
-		this->idnumber = idnumber;
-		this->fullname = fullname;
+		m_idnumber	= idnumber;
+		m_fullname	= fullname;
 
-		this->fpsize = fpsize;
-		this->fpdata = NULL;
-	}
-
-	StudentInfo::StudentInfo(const std::string& idnumber, 
-							 const std::string& fullname, 
-							 const size_t  fpsize, 
-							 byte*&  fpdata)
-	{
-		this->idnumber = idnumber;
-		this->fullname = fullname;
-
-		this->fpsize = fpsize;
-		this->fpdata = fpdata;
-
-		fpdata = NULL;
+		m_fpsize	= fpsize;
+		m_fpdata	= fpdata;
 	}
 
 	StudentInfo::~StudentInfo()
 	{
-		if (this->fpdata != NULL)
-			delete this->fpdata;
+		if (m_fpdata != NULL)
+			delete m_fpdata;
 	}
 }

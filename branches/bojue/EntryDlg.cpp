@@ -110,6 +110,7 @@ void CEntryDlg::OnCbnSelendokSession()
 {
 	int index = m_sessionComboBox->GetCurSel();//加载会话信息
 	m_conn.associate_session(m_session[index]);
+	get_all_info()//这里是以前调用get_all_info的地方
 }
 
 void CEntryDlg::OnBnClickedNext()

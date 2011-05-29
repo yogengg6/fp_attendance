@@ -44,7 +44,10 @@ protected:
 
 	virtual BOOL OnInitDialog();
 
-	DECLARE_MESSAGE_MAP()
+	DECLARE_MESSAGE_MAP()；
+
+    CTime tm;                 //用于得到系统时间的变量
+    
 
 private:
 

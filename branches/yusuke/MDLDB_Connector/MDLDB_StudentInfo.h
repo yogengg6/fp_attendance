@@ -9,44 +9,37 @@ namespace mdldb
 	{
 	public:
 		StudentInfo();
-		StudentInfo(const std::string& idnumber, 
-					const std::string& fullname, 
-					const size_t  fpsize);
-		StudentInfo(const std::string& idnumber, 
-					const std::string& fullname, 
-					const size_t  fpsize, 
-					byte*&  fpdata);
+		StudentInfo(const std::string&		idnumber, 
+					const std::string&		fullname, 
+					const size_t			fpsize	,
+					const byte*				fpdata);
 		~StudentInfo();
 
 		inline void set_idnumber(const std::string& idnumber)
 		{
-			this->idnumber = idnumber;
+			m_idnumber = idnumber;
 		}
 		inline void set_fullname(const std::string& fullname)
 		{
-			this->fullname = fullname;
+			m_fullname = fullname;
 		}
-		inline void set_fpsize (const size_t fpsize)
+		inline void set_fpdata (const size_t fpsize, const byte* fpdata)
 		{
-			this->fpsize = fpsize;
-		}
-		inline void set_fpdata (byte*& fpdata)
-		{
-			if (this->fpdata != NULL)
-				delete this->fpdata;
-			this->fpdata = fpdata;
-			fpdata = NULL;
+			if (m_fpdata != NULL)
+				delete m_fpdata;
+			m_fpsize = fpsize;
+			m_fpdata = fpdata;
 		}
 
-		inline std::string  get_idnumber() const {return this->idnumber; }
-		inline std::string  get_fullname() const {return this->fullname; }
-		inline size_t       get_fpsize()   const {return this->fpsize;   }
-		inline byte*        get_fpdata()   const {return this->fpdata;   }
+		inline std::string	get_idnumber() const {return m_idnumber; }
+		inline std::string	get_fullname() const {return m_fullname; }
+		inline size_t		get_fpsize	() const {return m_fpsize;   }
+		inline const byte*	get_fpdata	() const {return m_fpdata;   }
 
 	private:
-		std::string idnumber;
-		std::string fullname;
-		size_t      fpsize;
-		byte* fpdata;
+		std::string				m_idnumber;
+		std::string				m_fullname;
+		size_t					m_fpsize;
+		const byte*				m_fpdata;
 	} ;
 }

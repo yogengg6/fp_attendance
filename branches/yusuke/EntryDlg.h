@@ -37,6 +37,7 @@ protected:
 
 	static WCHAR				m_convWchBuf[200];
 
+	CButton   *					m_nextButton;
 	CComboBox *					m_courseComboBox;
 	CComboBox *					m_sessionComboBox;
 
@@ -51,4 +52,6 @@ public:
 	afx_msg void OnBnClickedExit();
 	afx_msg void OnBnClickedAttendant();
 	afx_msg void OnBnClickedRegister();
+	afx_msg void OnCbnSelchangeCourse();
+	afx_msg void OnCbnSetfocusSession();
 };

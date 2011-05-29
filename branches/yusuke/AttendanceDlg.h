@@ -23,24 +23,35 @@ class CAttendanceDlg : public CDialog
 	DECLARE_DYNAMIC(CAttendanceDlg)
 
 public:
-	CAttendanceDlg(mdldb::Connector& conn, CWnd* pParent = NULL);   // 标准构造函数
+	CAttendanceDlg(mdldb::Connector& conn, CWnd* pParent = NULL);
 	virtual ~CAttendanceDlg();
 
 	void AddStatus(LPCTSTR s);
-    bool VerifyFeatures(mdldb::StudentInfo* m_StudentInfo_list, DATA_BLOB* pImageBlob);
+    //bool VerifyFeatures(mdldb::StudentInfo* m_StudentInfo_list, DATA_BLOB* pImageBlob);
 
 // 对话框数据
 	enum { IDD = IDD_ATTENDANT };
+	enum { FP_NOTIFY = WM_USER + 100 };
+	enum { FP_NOT_FOUND = -1, DEVICE_ERROR = -1, LACK_MEMORY = -3};
 
 protected:
-	mdldb::Connector			m_conn;
+	//窗体控件成员变量
+	CListBox*		m_notify;
 
-	CListBox  *					m_notifyListBox;
-	
+	//指纹识别相关成员变量
+	FT_HANDLE       m_fxContext;
+	FT_HANDLE       m_mcContext;
+	HDPOPERATION    m_hOperationVerify;
+	DATA_BLOB       m_RegTemplate;
+
+	//数据结构成员变量
+	mdldb::Connector			m_conn;
 	vector<mdldb::StudentInfo>	m_student_info;
 
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
+	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
+
+	int MatchFeatures(DATA_BLOB* const fpTemplate);
 
 	DECLARE_MESSAGE_MAP()
 public:
