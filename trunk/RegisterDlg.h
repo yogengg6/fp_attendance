@@ -8,8 +8,6 @@
  */
 #pragma once
 
-#define FP_NOTIFY (WM_USER + 100)
-
 // CRegisterDlg 对话框
 
 using namespace std;
@@ -28,6 +26,7 @@ public:
 
 // 对话框数据
 	enum { IDD = IDD_REGISTER };
+	enum { FP_NOTIFY = WM_USER + 100 };
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
@@ -35,30 +34,29 @@ protected:
 
 private:
 
+	//窗体控件成员变量
 	CStatic*        m_pStaticDrawArea;
-	CEdit*			m_pEditPrompt;
-	CListBox*		m_pListBoxNotify;
-
-	CString         m_idnumber;
-
-	FT_HANDLE       m_fxContext;
-	FT_HANDLE       m_mcContext;
-
-	HDPOPERATION    m_hOperationEnroll;
-
+	CEdit*			m_pRegStatus;
+	CListBox*		m_pRegNotify;
 	CRect           m_rectDrawArea;
 
+	//指纹识别相关成员变量
+	FT_HANDLE       m_fxContext;
+	FT_HANDLE       m_mcContext;
+	HDPOPERATION    m_hOperationEnroll;
 	int             m_nPreRegFtrs;
 	FT_BYTE**       m_TemplateArray;
 	int             m_nRegFingerprint;
 	FT_REG_OPTIONS  m_mcRegOptions;
-
-	mdldb::StudentInfo     m_studentInfo;
 	DATA_BLOB       m_RegTemplate;
 
-	mdldb::Connector m_conn;
+	//数据结构成员变量
+	CString				m_idnumber;
+	mdldb::StudentInfo  m_studentInfo;
+	mdldb::Connector	m_conn;
 
 	DECLARE_MESSAGE_MAP()
+
 public:
 	afx_msg LRESULT OnFpNotify (WPARAM wParam, LPARAM lParam);
 	afx_msg virtual BOOL OnInitDialog();

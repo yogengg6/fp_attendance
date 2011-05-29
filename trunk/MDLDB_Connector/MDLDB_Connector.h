@@ -100,7 +100,7 @@ namespace mdldb{
 		std::vector<std::string> get_session_discription(uint32_t course_id = 0);
 
 		// 当本地不存在需要用到的指纹数据时才应当使用本函数
-		std::vector<StudentInfo>  get_course_student_info(uint32_t courseid = 0) const;
+		void  get_course_student_info(std::vector<StudentInfo> &student_info);
 
 		/**
 		 * 获取的字符可能会是乱码（字节码）,因此可能需要使用
