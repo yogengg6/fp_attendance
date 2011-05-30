@@ -31,8 +31,9 @@
 #define ID_BACK                         1023
 #define IDC_COURSE                      1024
 #define IDC_SESSION                     1025
-#define IDC_ATTENDANT_FULLNAME          1027
-#define IDC_ATTENDANT_IDNUMBER          1028
+#define IDC_ATTENDANT_IDNUMBER          1027
+#define IDC_ATTENDANT_FULLNAME          1028
+#define IDC_EDIT2                       1030
 
 // Next default values for new objects
 // 
@@ -40,7 +41,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        132
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1029
+#define _APS_NEXT_CONTROL_VALUE         1031
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -5,7 +5,7 @@
  * Copyleft     : This program is published under GPL
  * Author0      : Yusuke(Qiuchengxuan@gmail.com)
  * Author1      : Zembojue(zembojue@gmail.com)
- * Date	        : 2011-5-11 20:29
+ * Date	        : 2011-5-29 20:29
  */
 #pragma once
 
@@ -27,9 +27,8 @@ public:
 	virtual ~CAttendanceDlg();
 
 	void AddStatus(LPCTSTR s);
-    //bool VerifyFeatures(mdldb::StudentInfo* m_StudentInfo_list, DATA_BLOB* pImageBlob);
 
-// 对话框数据
+	// 对话框数据
 	enum { IDD = IDD_ATTENDANT };
 	enum { FP_NOTIFY = WM_USER + 100 };
 	enum { FP_NOT_FOUND = -1, DEVICE_ERROR = -1, LACK_MEMORY = -3};
@@ -51,6 +50,10 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
 
+	/** 
+	 * 从数据库（或本地）中的指纹数据一一比对，找到匹配的数据后返回
+	 * 该学生信息于m_student_index向量中的下标
+	 */
 	int MatchFeatures(DATA_BLOB* const fpTemplate);
 
 	DECLARE_MESSAGE_MAP()

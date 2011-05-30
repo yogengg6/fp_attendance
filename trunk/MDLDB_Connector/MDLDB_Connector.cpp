@@ -7,6 +7,9 @@
  * Author2      : Edward(Edward.zhw@gmail.com)
  * Date	        : 2011-4-23 12:33
  */
+
+#pragma warning(disable: 4244)
+
 #include "stdafx.h"
 
 #include <iostream>
@@ -21,6 +24,11 @@
 #pragma warning(disable:4101)
 
 namespace mdldb{
+	bool									Connector::m_course_has_session = false;
+	uint32_t								Connector::m_course_id = 0;
+	uint32_t								Connector::m_statuses[4] = {0};
+	std::string								Connector::m_statuesset = "";
+	SessionInfo								Connector::m_sess_info = {0};
 	std::auto_ptr<sql::mysql::MySQL_Driver>	Connector::m_driver(NULL);
 	std::auto_ptr<sql::Statement>			Connector::m_statement(NULL);
 	std::auto_ptr<sql::Connection>			Connector::m_connection(NULL);
@@ -35,8 +43,6 @@ namespace mdldb{
 						 )
 	{
 		m_sess_info.lasttakenby = 2; // 管理员点名
-		m_course_id = 0;
-		::ZeroMemory(&m_sess_info, sizeof(SessionInfo));
 		try {
 			if (m_driver.get() == NULL)
 				m_driver = std::auto_ptr<sql::mysql::MySQL_Driver>(sql::mysql::get_driver_instance());
@@ -49,15 +55,10 @@ namespace mdldb{
 
 	Connector::Connector(Connector& conn)
 	{
-		m_course_id     = conn.m_course_id;
-		m_sess_info     = conn.m_sess_info;
-		memcpy(m_statuses, conn.m_statuses, sizeof(m_statuses));
 	}
 
 	Connector::Connector(void)
 	{
-		m_course_id = 0;
-		::ZeroMemory(&m_sess_info, sizeof(SessionInfo));
 		if (m_driver.get() == NULL)
 			m_driver = std::auto_ptr<sql::mysql::MySQL_Driver>(sql::mysql::get_driver_instance());
 	}
@@ -118,17 +119,19 @@ namespace mdldb{
 			prep_stmt->setUInt(1, id);
 
 			std::auto_ptr<sql::ResultSet> rs(prep_stmt->executeQuery());
-			if (rs->rowsCount() != 4)
-				throw MDLDB_Exception("内部错误：错误的课程！", MDLDB_GENERAL_ERROR);
 
+			if (rs->rowsCount() != 4) {
+				m_course_has_session = false;
+				return;
+			}
+			else
+				m_course_has_session = true;
 			while (rs->next())
 				m_statuses[i++] = rs->getUInt("id");
 
-			prep_stmt.release();
 			prep_stmt = std::auto_ptr<sql::PreparedStatement>(m_connection->prepareStatement(sql_statues_ordered));
 			prep_stmt->setUInt(1, id);
 
-			rs.release();
 			rs = std::auto_ptr<sql::ResultSet>(prep_stmt->executeQuery());
 			while (rs->next())
 				sout << rs->getUInt("id") << ",";
@@ -263,7 +266,8 @@ namespace mdldb{
 			prep_stmt->setBlob(1, &str_stream);
 			prep_stmt->setUInt(2, stu_info.get_fpsize());
 			prep_stmt->setString(3, stu_info.get_idnumber());
-			prep_stmt->executeUpdate();
+			if (prep_stmt->executeUpdate() <= 0)
+				throw MDLDB_Exception("内部错误：学生信息不合法", MDLDB_GENERAL_ERROR);
 
 		} catch(sql::SQLException& e) {
 			throw MDLDB_Exception(e.what(), MDLDB_GENERAL_ERROR);
@@ -281,6 +285,59 @@ namespace mdldb{
 			throw MDLDB_Exception("没有关联会话", MDLDB_NO_SESSION);
 
 		uint32_t now = time(NULL);
+
+		uint32_t status;
+		int studentid, rows_affected;
+
+		std::string sql_get_studentid = "SELECT id FROM mdl_user WHERE idnumber=?";
+
+		std::auto_ptr<sql::PreparedStatement> 
+			prep_stmt(m_connection->prepareStatement(sql_get_studentid));
+		prep_stmt->setString(1, idnumber);
+
+		std::auto_ptr<sql::ResultSet> rs(prep_stmt->executeQuery());
+		if (rs->rowsCount() != 1)
+			throw MDLDB_Exception("内部错误：不合法的学号", MDLDB_GENERAL_ERROR);
+		rs->next();
+		studentid = rs->getUInt("id");
+
+		if (now <= m_sess_info.sessdate)
+			status = m_statuses[ATTEND];
+		else if (now <= m_sess_info.sessdate + m_sess_info.duration)
+			status = m_statuses[LATE];
+		else
+			status = m_statuses[ABSENT];
+
+		//如果数据库存在考勤记录，更新之
+		const char* sql_update = 
+			"UPDATE mdl_attendance_log SET statusid=? WHERE sessionid=? AND studentid=?";
+
+		prep_stmt = std::auto_ptr<sql::PreparedStatement>(m_connection->prepareStatement(sql_update));
+		prep_stmt->setUInt(1, status);
+		prep_stmt->setUInt(2, m_sess_info.id);
+		prep_stmt->setUInt(3, studentid);
+		if ((rows_affected = prep_stmt->executeUpdate()) == 1)
+			return true;
+		else if (rows_affected != 0)
+			throw MDLDB_Exception("内部错误", MDLDB_GENERAL_ERROR);
+		
+		//数据库不存在相应考勤记录，插入一条记录
+		const char* sql_insert = 
+			"INSERT INTO mdl_attendance_log \
+			(sessionid, studentid, statusid, statusset, timetaken, takenby, remarks) \
+			VALUES(?, ?, ?, ?, ?, ?, ?)";
+
+		prep_stmt =
+			std::auto_ptr<sql::PreparedStatement>(m_connection->prepareStatement(sql_insert));
+
+		prep_stmt->setUInt(1, m_sess_info.id);
+		prep_stmt->setUInt(2, studentid);
+		prep_stmt->setUInt(3, status);
+		prep_stmt->setString(4, m_statuesset);
+		prep_stmt->setUInt(5, now);
+		prep_stmt->setUInt(6, 2);//takenby admin
+		prep_stmt->setString(7, "");
+		prep_stmt->execute();
 
 		return true;
 	}
@@ -322,8 +379,6 @@ namespace mdldb{
 				throw MDLDB_Exception("会话不唯一", MDLDB_GENERAL_ERROR);
 			rs->next();
 			uint32_t contextid = rs->getUInt("id");
-			rs.release();
-			prep_stmt.release();
 
 			//获取选修moodle课程的所有学生
 
