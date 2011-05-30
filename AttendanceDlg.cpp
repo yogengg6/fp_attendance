@@ -5,10 +5,8 @@
  * Copyleft     : This program is published under GPL
  * Author       : Yusuke(Qiuchengxuan@gmail.com)
  * Author       : Bojue(zembojue@gmail.com)
- * Date	        : 2011-5-11 20:29
+ * Date	        : 2011-5-29 20:29
  */
-// AttendanceDlg.cpp : 实现文件
-//
 
 #include "stdafx.h"
 #include "FP_Attendance.h"
@@ -187,7 +185,7 @@ int CAttendanceDlg::MatchFeatures(DATA_BLOB* const fpImage)
 			delete fpTemplate;
 			return FP_NOT_FOUND;
 		}
-	} catch (exception &e) {
+	} catch (...) {
 		throw;
 	}
 	return DEVICE_ERROR;
@@ -195,16 +193,25 @@ int CAttendanceDlg::MatchFeatures(DATA_BLOB* const fpImage)
 
 LRESULT CAttendanceDlg::OnFpNotify(WPARAM wParam, LPARAM lParam) {
 
+	static wchar_t conv_buf_wch[200];
+
 	switch(wParam) {
 	case WN_COMPLETED:
 		{
 			AddStatus(_T("指纹已捕获"));
 			DATA_BLOB* fpImage = reinterpret_cast<DATA_BLOB*>(lParam);
+			int index;
 
-			if (MatchFeatures(fpImage) >= 0) {
-				AddStatus(_T("指纹成功识别，祝您愉快。"));
+			if ((index = MatchFeatures(fpImage)) >= 0) {
+				string& idnumber = m_student_info[index].get_idnumber();
+				string& fullname = m_student_info[index].get_fullname();
+				m_conn.attendant(idnumber);
+				SetDlgItemText(IDC_ATTENDANT_IDNUMBER, CString(idnumber.c_str()));
+				MultiByteToWideChar(CP_UTF8, NULL, fullname.c_str(), -1, conv_buf_wch, fullname.length());
+				SetDlgItemText(IDC_ATTENDANT_FULLNAME, conv_buf_wch);
+				AddStatus(_T("您的出勤信息登入成功，祝您愉快！"));
 			} else {
-				AddStatus(_T("指纹识别失败！"));
+				AddStatus(_T("对不起，没有找到指纹相应的数据。"));
 			}
 
 			break;

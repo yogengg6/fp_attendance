@@ -123,7 +123,7 @@ void CEntryDlg::OnBnClickedExit()
 void CEntryDlg::OnBnClickedAttendant()
 {
 	m_courseComboBox->EnableWindow(TRUE);
-	if (m_conn.course_associated())
+	if (m_conn.course_associated() && m_conn.course_has_session())
 		m_sessionComboBox->EnableWindow(TRUE);
 	if (m_conn.session_associated())
 		m_nextButton->EnableWindow(TRUE);
@@ -142,6 +142,8 @@ void CEntryDlg::OnCbnSelendokCourse()
 {
 	int index = m_courseComboBox->GetCurSel();
 	m_conn.associate_course(m_courseInfo[index].id);
+	if (m_conn.course_has_session())
+		m_sessionComboBox->EnableWindow(TRUE);
 }
 
 void CEntryDlg::OnCbnSelendokSession()
@@ -153,7 +155,10 @@ void CEntryDlg::OnCbnSelendokSession()
 
 void CEntryDlg::OnCbnSelchangeCourse()
 {
-	m_sessionComboBox->EnableWindow(TRUE);
+	if (m_conn.course_has_session())
+		m_sessionComboBox->EnableWindow(TRUE);
+	else
+		m_sessionComboBox->EnableWindow(FALSE);
 }
 
 void CEntryDlg::OnCbnSetfocusSession()

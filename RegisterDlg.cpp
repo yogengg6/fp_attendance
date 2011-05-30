@@ -159,7 +159,7 @@ void CRegisterDlg::OnBnClickedGetinfo()
 
 			str.Format(L"%d次", m_nPreRegFtrs);
 			SetDlgItemText(IDC_REG_STATUS, L"你已经可以开始扫描你的指纹。");
-			SetDlgItemText(IDC_REG_FULLNAME, L"邱布衣");
+			SetDlgItemText(IDC_REG_FULLNAME, conv_buf_wch);
 			AddStatus(L"请将手指接触扫描区以完成操作，总共需要" + str);
 		} else {
 			m_idnumber = "";

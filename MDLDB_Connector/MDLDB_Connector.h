@@ -46,11 +46,6 @@ namespace mdldb{
 
 	const time_t  BEFORE_CLASS_BEGIN =  10 * 60 - 1;
 
-	const int	  STATUS_ATTEND = 0;
-	const int	  STATUS_LATE	= 1;
-	const int	  STATUS_EXCUSE = 2;
-	const int	  STATUS_ABSENT = 3;
-
 	class Connector
 	{
 	public:
@@ -81,6 +76,9 @@ namespace mdldb{
 		//判断已连接数据库
 		inline bool connected() const {return m_connection.get() != NULL;}
 
+		//判断课程是否存在会话
+		inline bool course_has_session() const {return m_course_has_session;}
+
 		//判断已关联课程
 		inline bool course_associated()  const {return m_course_id > 0;}
 
@@ -108,17 +106,27 @@ namespace mdldb{
 		 */
 		StudentInfo get_student_info(const std::string& idnumber) throw(mdldb::MDLDB_Exception);
 	protected:
+		enum {
+			ATTEND	= 0,
+			LATE	= 1,
+			EXCUSE	= 2,
+			ABSENT	= 3
+		};
+
 		//关联的课程id
-		uint32_t m_course_id;
+		static uint32_t m_course_id;
+
+		//课程是否建立了会话
+		static bool		m_course_has_session;
 
 		//四种状态（出勤、迟到、请假、旷课）
-		uint32_t m_statuses[4];
+		static uint32_t m_statuses[4];
 
-		//需要写入的statusset
-		std::string m_statuesset;
+		//需要写入的statusset，根据grade排序
+		static std::string m_statuesset;
 
 		//会话信息
-		SessionInfo m_sess_info;
+		static SessionInfo m_sess_info;
 
 		/**
 		 * 由于引用拷贝时直接将指针赋值，导致析构时可能会带来重复释放内存，
