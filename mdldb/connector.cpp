@@ -17,9 +17,9 @@
 #include <windows.h>
 #include <cppconn/sqlstring.h>
 
-#include "MDLDB_Connector.h"
-#include "MDLDB_Exception.h"
-#include "MDLDB_StudentInfo.h"
+#include "connector.h"
+#include "exception.h"
+#include "studentinfo.h"
 
 #pragma warning(disable:4101)
 

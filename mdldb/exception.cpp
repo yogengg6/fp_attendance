@@ -8,7 +8,7 @@
  * Date	        : 2011-4-23 12:33
  */
 #include "stdafx.h"
-#include "MDLDB_Exception.h"
+#include "exception.h"
 
 
 namespace mdldb{
