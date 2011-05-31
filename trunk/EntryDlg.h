@@ -13,7 +13,7 @@ using namespace std;
 #include <vector>
 
 #include "afxwin.h"
-#include "MDLDB_Connector/MDLDB_Connector.h"
+#include "mdldb/connector.h"
 
 // CEntryDlg ¶Ô»°¿ò
 

@@ -14,8 +14,8 @@
 #include "FP_AttendanceDlg.h"
 #include "EntryDlg.h"
 
-#include "MDLDB_Connector/MDLDB_Connector.h"
-#include "MDLDB_Connector/MDLDB_Exception.h"
+#include "mdldb/connector.h"
+#include "mdldb/exception.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

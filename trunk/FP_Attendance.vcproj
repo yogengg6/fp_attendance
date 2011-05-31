@@ -293,30 +293,30 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="MDLDB_Connector"
+			Name="mdldb"
 			>
 			<File
-				RelativePath=".\MDLDB_Connector\MDLDB_Connector.cpp"
+				RelativePath=".\mdldb\connector.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\MDLDB_Connector\MDLDB_Connector.h"
+				RelativePath=".\mdldb\connector.h"
 				>
 			</File>
 			<File
-				RelativePath=".\MDLDB_Connector\MDLDB_Exception.cpp"
+				RelativePath=".\mdldb\exception.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\MDLDB_Connector\MDLDB_Exception.h"
+				RelativePath=".\mdldb\exception.h"
 				>
 			</File>
 			<File
-				RelativePath=".\MDLDB_Connector\MDLDB_StudentInfo.cpp"
+				RelativePath=".\mdldb\studentinfo.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\MDLDB_Connector\MDLDB_StudentInfo.h"
+				RelativePath=".\mdldb\studentinfo.h"
 				>
 			</File>
 		</Filter>

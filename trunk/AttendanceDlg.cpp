@@ -11,7 +11,7 @@
 #include "stdafx.h"
 #include "FP_Attendance.h"
 #include "AttendanceDlg.h"
-#include "MDLDB_Connector/MDLDB_Exception.h"
+#include "mdldb/exception.h"
 
 // CAttendanceDlg ¶Ô»°¿ò
 
@@ -72,6 +72,8 @@ void CAttendanceDlg::DoDataExchange(CDataExchange* pDX)
 
 BOOL CAttendanceDlg::OnInitDialog()
 {
+	CDialog::OnInitDialog();
+
 	if (! m_conn.connected())
 		return FALSE;
 

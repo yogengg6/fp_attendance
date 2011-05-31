@@ -69,6 +69,6 @@
 #include <cppconn/statement.h>
 #include <cppconn/prepared_statement.h>
 
-#include "MDLDB_Connector/MDLDB_StudentInfo.h"
-#include "MDLDB_Connector/MDLDB_Exception.h"
-#include "MDLDB_Connector/MDLDB_Connector.h"
+#include "mdldb/studentinfo.h"
+#include "mdldb/exception.h"
+#include "mdldb/connector.h"

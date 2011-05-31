@@ -108,6 +108,7 @@ END_MESSAGE_MAP()
 
 BOOL CRegisterDlg::OnInitDialog()
 {
+	CDialog::OnInitDialog();
 
 	m_pRegStatus		= (CEdit*)	  GetDlgItem(IDC_REG_STATUS);
 	m_pRegNotify		= (CListBox*) GetDlgItem(IDC_REG_NOTIFY);

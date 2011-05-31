@@ -50,6 +50,8 @@ void CEntryDlg::DoDataExchange(CDataExchange* pDX)
 
 BOOL CEntryDlg::OnInitDialog()
 {
+	CDialog::OnInitDialog();
+
 	if (! m_conn.connected())
 		return FALSE;
 
