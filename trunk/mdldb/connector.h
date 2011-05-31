@@ -23,7 +23,7 @@
 #include <mysql_driver.h>
 #include <cppconn\prepared_statement.h>
 
-#include "MDLDB_Exception.h"
+#include "exception.h"
 
 #ifdef __GNUC__
 #define sprintf_s(buffer, format, ...) sprintf(buffer, format, __VA_ARGS__)
