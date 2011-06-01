@@ -6,18 +6,19 @@
  * Author       : Yusuke(Qiuchengxuan@gmail.com)
  * Date	        : 2011-5-11 20:29
  */
-// FP_AttendanceDlg.h : 头文件
+// LoginDlg.h : 头文件
 //
 
 #pragma once
 
+#include "mdldb/connector.h"
 
-// CFP_AttendanceDlg 对话框
-class CFP_AttendanceDlg : public CDialog
+// CLoginDlg 对话框
+class CLoginDlg : public CDialog
 {
 // 构造
 public:
-	CFP_AttendanceDlg(CWnd* pParent = NULL);	// 标准构造函数
+	CLoginDlg(CWnd* pParent = NULL);	// 标准构造函数
 
 // 对话框数据
 	enum { IDD = IDD_FP_ATTENDANCE_DIALOG };
@@ -30,6 +31,8 @@ public:
 protected:
 	HICON m_hIcon;
 
+	mdldb::Connector m_conn;
+
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
@@ -39,4 +42,5 @@ protected:
 public:
 	afx_msg void OnBnClickedConnect();
 	afx_msg void OnBnClickedExit();
+	afx_msg void On32772();
 };

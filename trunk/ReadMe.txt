@@ -31,7 +31,7 @@ res\FP_Attendance.rc2
 应用程序向导创建一个对话框类:
 
 FP_AttendanceDlg.h，FP_AttendanceDlg.cpp - 对话框
-这些文件包含 CFP_AttendanceDlg 类。该类定义应用程序主对话框的行为。该对话框的模板位于 FP_Attendance.rc 中，该文件可以在 Microsoft Visual C++ 中进行编辑。
+这些文件包含 CLoginDlg 类。该类定义应用程序主对话框的行为。该对话框的模板位于 FP_Attendance.rc 中，该文件可以在 Microsoft Visual C++ 中进行编辑。
 
 
 /////////////////////////////////////////////////////////////////////////////

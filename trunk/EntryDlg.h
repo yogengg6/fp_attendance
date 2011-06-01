@@ -35,9 +35,9 @@ protected:
 	vector<mdldb::CourseInfo>	m_courseInfo;
 	vector<string>				m_session;
 
-	static WCHAR				m_convWchBuf[200];
-
 	CButton   *					m_nextButton;
+	CStatic	  *					m_static_course;
+	CStatic   *					m_static_session;
 	CComboBox *					m_courseComboBox;
 	CComboBox *					m_sessionComboBox;
 

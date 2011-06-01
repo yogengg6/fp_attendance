@@ -45,11 +45,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="D:\software\boost_1_46_1;&quot;d:\software\MySQL\MySQL Connector C++ 1.1.0\include&quot;;&quot;D:\software\DigitalPersona\One Touch SDK\C-C++\Include&quot;"
+				AdditionalIncludeDirectories="D:\Dev\cryptopp561;D:\Dev\boost_1_46_1;&quot;d:\software\MySQL\MySQL Connector C++ 1.1.0\include&quot;;&quot;D:\software\DigitalPersona\One Touch SDK\C-C++\Include&quot;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
+				EnableEnhancedInstructionSet="0"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -68,9 +69,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="mysqlcppconn.lib mysqlcppconn-static.lib DPFPApi.lib dpHFtrEx.lib dpHMatch.lib"
+				AdditionalDependencies="mysqlcppconn.lib mysqlcppconn-static.lib DPFPApi.lib dpHFtrEx.lib dpHMatch.lib cryptlib.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;D:\software\DigitalPersona\One Touch SDK\C-C++\Lib\win32&quot;;&quot;D:\software\MySQL\MySQL Connector C++ 1.1.0\lib\opt&quot;"
+				AdditionalLibraryDirectories="D:\Dev\cryptopp561\Win32\Output\Debug;&quot;D:\software\DigitalPersona\One Touch SDK\C-C++\Lib\win32&quot;;&quot;D:\software\MySQL\MySQL Connector C++ 1.1.0\lib\opt&quot;"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -128,7 +130,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;D:\software\DigitalPersona\One Touch SDK\C-C++\Include&quot;;D:\software\boost_1_46_1;&quot;D:\software\MySQL\MySQL Connector C++ 1.1.0\include&quot;"
+				AdditionalIncludeDirectories="&quot;D:\software\DigitalPersona\One Touch SDK\C-C++\Include&quot;;D:\Dev\boost_1_46_1;&quot;D:\software\MySQL\MySQL Connector C++ 1.1.0\include&quot;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="2"
@@ -215,6 +217,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\ultility.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Í·ÎÄ¼þ"
@@ -235,6 +241,10 @@
 			</File>
 			<File
 				RelativePath=".\targetver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ultility.h"
 				>
 			</File>
 		</Filter>
@@ -268,6 +278,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Dbconfig.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Dbconfig.h"
+				>
+			</File>
+			<File
 				RelativePath=".\EntryDlg.cpp"
 				>
 			</File>
@@ -276,11 +294,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FP_AttendanceDlg.cpp"
+				RelativePath=".\LoginDlg.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\FP_AttendanceDlg.h"
+				RelativePath=".\LoginDlg.h"
 				>
 			</File>
 			<File
@@ -312,11 +330,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\mdldb\studentinfo.cpp"
+				RelativePath=".\mdldb\userinfo.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\mdldb\studentinfo.h"
+				RelativePath=".\mdldb\userinfo.h"
 				>
 			</File>
 		</Filter>

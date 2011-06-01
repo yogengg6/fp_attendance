@@ -10,6 +10,7 @@
 //
 
 #include "stdafx.h"
+#include "ultility.h"
 #include "FP_Attendance.h"
 #include "RegisterDlg.h"
 
@@ -130,22 +131,16 @@ BOOL CRegisterDlg::OnInitDialog()
 void CRegisterDlg::OnBnClickedGetinfo()
 {
 	CString idnumber;
-	static char conv_buf[100];
-	static wchar_t conv_buf_wch[200];
 
 	GetDlgItemText(IDC_REG_IDNUMBER, idnumber);
 
-	wcstombs_s(NULL, conv_buf, (idnumber.GetLength() + 1) * 2, idnumber, _TRUNCATE);
-	string sIdNum(conv_buf);
-
 	try {
-		m_studentInfo = m_conn.get_student_info(sIdNum);
+		m_studentInfo = m_conn.get_student_info(CStringToString(idnumber));
 		string fullname = m_studentInfo.get_fullname();
-		MultiByteToWideChar(CP_UTF8, NULL, fullname.c_str(), -1, conv_buf_wch, fullname.length());
 
 		CString verify_notice = CString(L"学号:") + CString(m_studentInfo.get_idnumber().c_str());
 		verify_notice.AppendFormat(	L"\n姓名:%s\n指纹:%s", 
-									conv_buf_wch, 
+									stringToCString(fullname), 
 									(m_studentInfo.get_fpsize() > 0) ? L"已注册": L"未注册"
 									);
 
@@ -160,7 +155,7 @@ void CRegisterDlg::OnBnClickedGetinfo()
 
 			str.Format(L"%d次", m_nPreRegFtrs);
 			SetDlgItemText(IDC_REG_STATUS, L"你已经可以开始扫描你的指纹。");
-			SetDlgItemText(IDC_REG_FULLNAME, conv_buf_wch);
+			SetDlgItemText(IDC_REG_FULLNAME, stringToCString(fullname));
 			AddStatus(L"请将手指接触扫描区以完成操作，总共需要" + str);
 		} else {
 			m_idnumber = "";
