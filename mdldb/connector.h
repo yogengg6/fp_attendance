@@ -10,6 +10,8 @@
 
 #pragma once
 
+using namespace std;
+
 //c header
 #include <cstdio>
 #include <ctime>
@@ -33,7 +35,7 @@ namespace mdldb{
 
 	typedef struct {
 		uint32_t id;
-		std::string fullname;
+		string fullname;
 	} CourseInfo;
 
 	typedef struct {
@@ -49,11 +51,12 @@ namespace mdldb{
 	class Connector
 	{
 	public:
-		Connector(void);
 
-		Connector(const char * const db_host,
-				  const char * const db_user,
-				  const char * const db_passwd
+		Connector(const string db_host,
+				  const string db_port,
+				  const string db_user,
+				  const string db_passwd,
+				  const string passwordsalt = "r+a~,qm_5(.M D]9[4-9T]u=JT/fu&z"
 				  );
 
 		Connector(Connector& conn);
@@ -61,20 +64,27 @@ namespace mdldb{
 		~Connector(void);
 
 		//连接数据库
-		bool		dbconnect(const char * const db_host,
-						  const char * const db_user,
-						  const char * const db_passwd
-						  ) throw(mdldb::MDLDB_Exception);
+		bool		dbconnect() throw(mdldb::MDLDB_Exception);
+
+		//考勤者用户信息验证
+		void		auth(string username, string password);
 
 		//关联课程并获取相应的状态集m_statuses
 		void		associate_course(uint32_t id);
 
 		//根据时间关联相应的会话
-		bool		associate_session(const std::string session_name) 
+		bool		associate_session(const string session_name) 
 						throw(mdldb::MDLDB_Exception);
 
+		inline void set_dbhost(string dbhost, string dbport) {
+			m_dbhost = "tcp://" + dbhost + ":" + dbport;
+		}
+
+		inline void set_dbuser(string dbuser){m_dbuser = dbuser;}
+
+		inline void set_dbpasswd(string dbpasswd){m_dbpasswd = dbpasswd;}
 		//判断已连接数据库
-		inline bool connected() const {return m_connection.get() != NULL;}
+		inline bool connected() const {return m_conn.get() != NULL;}
 
 		//判断课程是否存在会话
 		inline bool course_has_session() const {return m_course_has_session;}
@@ -89,22 +99,22 @@ namespace mdldb{
 		bool		enroll(StudentInfo& stu_info);
 
 		//根据学号判断出勤状态
-		bool		attendant(std::string idnumber);
+		bool		attendant(string idnumber);
 
 		//获取所有课程信息
-		std::vector<CourseInfo>  get_all_course();
+		vector<CourseInfo>  get_all_course();
 
 		//根据时间获取可能的会话的描述
-		std::vector<std::string> get_session_discription(uint32_t course_id = 0);
+		vector<string> get_session_discription(uint32_t course_id = 0);
 
 		// 当本地不存在需要用到的指纹数据时才应当使用本函数
-		void  get_course_student_info(std::vector<StudentInfo> &student_info);
+		void  get_course_student_info(vector<StudentInfo> &student_info);
 
 		/**
 		 * 获取的字符可能会是乱码（字节码）,因此可能需要使用
 		 * MultiByteToWideChar()来转换。
 		 */
-		StudentInfo get_student_info(const std::string& idnumber) throw(mdldb::MDLDB_Exception);
+		StudentInfo get_student_info(const string& idnumber) throw(mdldb::MDLDB_Exception);
 	protected:
 		enum {
 			ATTEND	= 0,
@@ -113,28 +123,38 @@ namespace mdldb{
 			ABSENT	= 3
 		};
 
+		static string	m_dbhost;
+		static string	m_dbuser;
+		static string	m_dbpasswd;
+
+		//moodle中为加强密码安全性而使用的passwordsalt
+		static string	m_passwordsalt;
+
+		//考勤人的id
+		static unsigned int	m_userid;
+
 		//关联的课程id
-		static uint32_t m_course_id;
+		static unsigned int m_course_id;
 
 		//课程是否建立了会话
-		static bool		m_course_has_session;
+		static bool			m_course_has_session;
 
 		//四种状态（出勤、迟到、请假、旷课）
-		static uint32_t m_statuses[4];
+		static unsigned int	m_statuses[4];
 
 		//需要写入的statusset，根据grade排序
-		static std::string m_statuesset;
+		static string	m_statuesset;
 
 		//会话信息
-		static SessionInfo m_sess_info;
+		static SessionInfo	m_sess_info;
 
 		/**
 		 * 由于引用拷贝时直接将指针赋值，导致析构时可能会带来重复释放内存，
 		 * 因此使用静态智能指针保存数据库的链接。
 		 */
-		static std::auto_ptr<sql::Statement>			m_statement;
-		static std::auto_ptr<sql::Connection>			m_connection;
-		static std::auto_ptr<sql::mysql::MySQL_Driver>	m_driver;
+		static auto_ptr<sql::Statement>			m_statement;
+		static auto_ptr<sql::Connection>			m_conn;
+		static auto_ptr<sql::mysql::MySQL_Driver>	m_driver;
 	};
 
 }

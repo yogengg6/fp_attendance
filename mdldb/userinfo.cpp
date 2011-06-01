@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include "studentinfo.h"
+#include "userinfo.h"
 
 namespace mdldb
 {

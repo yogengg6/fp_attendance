@@ -9,6 +9,7 @@
  */
 
 #include "stdafx.h"
+#include "ultility.h"
 #include "FP_Attendance.h"
 #include "AttendanceDlg.h"
 #include "mdldb/exception.h"
@@ -195,8 +196,6 @@ int CAttendanceDlg::MatchFeatures(DATA_BLOB* const fpImage)
 
 LRESULT CAttendanceDlg::OnFpNotify(WPARAM wParam, LPARAM lParam) {
 
-	static wchar_t conv_buf_wch[200];
-
 	switch(wParam) {
 	case WN_COMPLETED:
 		{
@@ -209,8 +208,7 @@ LRESULT CAttendanceDlg::OnFpNotify(WPARAM wParam, LPARAM lParam) {
 				string& fullname = m_student_info[index].get_fullname();
 				m_conn.attendant(idnumber);
 				SetDlgItemText(IDC_ATTENDANT_IDNUMBER, CString(idnumber.c_str()));
-				MultiByteToWideChar(CP_UTF8, NULL, fullname.c_str(), -1, conv_buf_wch, fullname.length());
-				SetDlgItemText(IDC_ATTENDANT_FULLNAME, conv_buf_wch);
+				SetDlgItemText(IDC_ATTENDANT_FULLNAME, stringToCString(fullname));
 				AddStatus(_T("您的出勤信息登入成功，祝您愉快！"));
 			} else {
 				AddStatus(_T("对不起，没有找到指纹相应的数据。"));

@@ -11,6 +11,7 @@
 
 #include "stdafx.h"
 #include "FP_Attendance.h"
+#include "ultility.h"
 #include "EntryDlg.h"
 #include "RegisterDlg.h"
 #include "AttendanceDlg.h"
@@ -18,8 +19,6 @@
 // CEntryDlg 对话框
 
 IMPLEMENT_DYNAMIC(CEntryDlg, CDialog)
-
-WCHAR CEntryDlg::m_convWchBuf[200];
 
 CEntryDlg::CEntryDlg(mdldb::Connector& conn, CWnd* pParent /*=NULL*/)
 	:	CDialog(CEntryDlg::IDD, pParent), m_conn(conn),
@@ -58,6 +57,8 @@ BOOL CEntryDlg::OnInitDialog()
 	m_nextButton	  = (CButton *)	 GetDlgItem(ID_NEXT);
 	m_courseComboBox  = (CComboBox*) GetDlgItem(IDC_COURSE);
 	m_sessionComboBox = (CComboBox*) GetDlgItem(IDC_SESSION);
+	m_static_course	  = (CStatic *)	 GetDlgItem(IDC_ENTRY_STATIC_COURSE);
+	m_static_session  = (CStatic *)  GetDlgItem(IDC_ENTRY_STATIC_SESSION);
 
 	try {
 		m_courseInfo = m_conn.get_all_course();
@@ -67,10 +68,8 @@ BOOL CEntryDlg::OnInitDialog()
 
 	SetDlgItemText(IDC_COURSE, L"请选择课程");
 
-	for (vector<mdldb::CourseInfo>::iterator it = m_courseInfo.begin(); it != m_courseInfo.end(); ++it) {
-		MultiByteToWideChar(CP_UTF8, NULL, it->fullname.c_str(), -1, m_convWchBuf, it->fullname.length());
-		m_courseComboBox->AddString(CString(m_convWchBuf));
-	}
+	for (unsigned int i = 0; i < m_courseInfo.size(); ++i)
+		m_courseComboBox->AddString(stringToCString(m_courseInfo[i].fullname));
 
 	return TRUE;
 
@@ -124,9 +123,12 @@ void CEntryDlg::OnBnClickedExit()
 }
 void CEntryDlg::OnBnClickedAttendant()
 {
+	m_static_course->EnableWindow(TRUE);
 	m_courseComboBox->EnableWindow(TRUE);
-	if (m_conn.course_associated() && m_conn.course_has_session())
+	if (m_conn.course_associated() && m_conn.course_has_session()) {
+		m_static_session->EnableWindow(TRUE);
 		m_sessionComboBox->EnableWindow(TRUE);
+	}
 	if (m_conn.session_associated())
 		m_nextButton->EnableWindow(TRUE);
 	else
@@ -136,6 +138,8 @@ void CEntryDlg::OnBnClickedAttendant()
 void CEntryDlg::OnBnClickedRegister()
 {
 	m_nextButton->EnableWindow(TRUE);
+	m_static_course->EnableWindow(FALSE);
+	m_static_session->EnableWindow(FALSE);
 	m_courseComboBox->EnableWindow(FALSE);
 	m_sessionComboBox->EnableWindow(FALSE);
 }
@@ -144,8 +148,10 @@ void CEntryDlg::OnCbnSelendokCourse()
 {
 	int index = m_courseComboBox->GetCurSel();
 	m_conn.associate_course(m_courseInfo[index].id);
-	if (m_conn.course_has_session())
+	if (m_conn.course_has_session()) {
+		m_static_session->EnableWindow(TRUE);
 		m_sessionComboBox->EnableWindow(TRUE);
+	}
 }
 
 void CEntryDlg::OnCbnSelendokSession()
@@ -157,10 +163,13 @@ void CEntryDlg::OnCbnSelendokSession()
 
 void CEntryDlg::OnCbnSelchangeCourse()
 {
-	if (m_conn.course_has_session())
+	if (m_conn.course_has_session()) {
+		m_static_session->EnableWindow(TRUE);
 		m_sessionComboBox->EnableWindow(TRUE);
-	else
+	} else {
+		m_static_session->EnableWindow(FALSE);
 		m_sessionComboBox->EnableWindow(FALSE);
+	}
 }
 
 void CEntryDlg::OnCbnSetfocusSession()
@@ -173,8 +182,6 @@ void CEntryDlg::OnCbnSetfocusSession()
 		MessageBox(CString(e.what()), L"数据库连接");
 	}
 
-	for (vector<string>::iterator it = m_session.begin(); it != m_session.end(); ++it) {
-		MultiByteToWideChar(CP_UTF8, NULL, it->c_str(), -1, m_convWchBuf, it->length());
-		m_sessionComboBox->AddString(CString(m_convWchBuf));
-	}
+	for (unsigned int i = 0; i < m_session.size(); ++i)
+		m_sessionComboBox->AddString(stringToCString(m_session[i]));
 }

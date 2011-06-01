@@ -6,14 +6,16 @@
  * Author       : Yusuke(Qiuchengxuan@gmail.com)
  * Date	        : 2011-5-11 20:29
  */
-// FP_AttendanceDlg.cpp : 实现文件
+// LoginDlg.cpp : 实现文件
 //
 
 #include "stdafx.h"
 #include "FP_Attendance.h"
-#include "FP_AttendanceDlg.h"
+#include "LoginDlg.h"
+#include "Dbconfig.h"
 #include "EntryDlg.h"
 
+#include "ultility.h"
 #include "mdldb/connector.h"
 #include "mdldb/exception.h"
 
@@ -53,35 +55,37 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
 END_MESSAGE_MAP()
 
 
-// CFP_AttendanceDlg 对话框
+// CLoginDlg 对话框
 
 
 
 
-CFP_AttendanceDlg::CFP_AttendanceDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CFP_AttendanceDlg::IDD, pParent)
+CLoginDlg::CLoginDlg(CWnd* pParent /*=NULL*/)
+	: CDialog(CLoginDlg::IDD, pParent),
+	m_conn("172.16.81.156", "3306", "attendance", "attendance")
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
-void CFP_AttendanceDlg::DoDataExchange(CDataExchange* pDX)
+void CLoginDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 }
 
-BEGIN_MESSAGE_MAP(CFP_AttendanceDlg, CDialog)
+BEGIN_MESSAGE_MAP(CLoginDlg, CDialog)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	//}}AFX_MSG_MAP
-	ON_BN_CLICKED(ID_CONNECT, &CFP_AttendanceDlg::OnBnClickedConnect)
-	ON_BN_CLICKED(ID_EXIT, &CFP_AttendanceDlg::OnBnClickedExit)
+	ON_BN_CLICKED(ID_CONNECT, &CLoginDlg::OnBnClickedConnect)
+	ON_BN_CLICKED(ID_EXIT, &CLoginDlg::OnBnClickedExit)
+	ON_COMMAND(ID_32772, &CLoginDlg::On32772)
 END_MESSAGE_MAP()
 
 
-// CFP_AttendanceDlg 消息处理程序
+// CLoginDlg 消息处理程序
 
-BOOL CFP_AttendanceDlg::OnInitDialog()
+BOOL CLoginDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
@@ -103,6 +107,10 @@ BOOL CFP_AttendanceDlg::OnInitDialog()
 		}
 	}
 
+	CMenu* menu = new CMenu();
+	menu->LoadMenu(IDR_MENU1);
+	SetMenu(menu);
+
 	// 设置此对话框的图标。当应用程序主窗口不是对话框时，框架将自动
 	//  执行此操作
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
@@ -110,13 +118,10 @@ BOOL CFP_AttendanceDlg::OnInitDialog()
 
 	// TODO: 在此添加额外的初始化代码
 
-	SetDlgItemText(IDC_DBHOST, L"172.16.81.156");
-	SetDlgItemText(IDC_DBPORT, L"3306");
-
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
-void CFP_AttendanceDlg::OnSysCommand(UINT nID, LPARAM lParam)
+void CLoginDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
 	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
 	{
@@ -133,7 +138,7 @@ void CFP_AttendanceDlg::OnSysCommand(UINT nID, LPARAM lParam)
 //  来绘制该图标。对于使用文档/视图模型的 MFC 应用程序，
 //  这将由框架自动完成。
 
-void CFP_AttendanceDlg::OnPaint()
+void CLoginDlg::OnPaint()
 {
 	if (IsIconic())
 	{
@@ -160,54 +165,41 @@ void CFP_AttendanceDlg::OnPaint()
 
 //当用户拖动最小化窗口时系统调用此函数取得光标
 //显示。
-HCURSOR CFP_AttendanceDlg::OnQueryDragIcon()
+HCURSOR CLoginDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
 
-void CFP_AttendanceDlg::OnBnClickedConnect()
+void CLoginDlg::OnBnClickedConnect()
 {
-	size_t strsize;
-    CString dbHost, dbPort, dbHostPort, dbUser, dbPasswd;
-    GetDlgItemText(IDC_DBHOST, dbHost);
-    GetDlgItemText(IDC_DBPORT, dbPort);
-    GetDlgItemText(IDC_DBUSER, dbUser);
-    GetDlgItemText(IDC_DBPASSWD, dbPasswd);
-	dbHostPort.Format(L"tcp://%s:%s", dbHost, dbPort);
-
-    /**
-     * convert wide char to char
-     */
-
-    strsize         = (dbHostPort.GetLength() + 1) * 2;
-    char *pDBHostPort   = new char[strsize];
-    wcstombs_s(NULL, pDBHostPort, strsize, dbHost, _TRUNCATE);
-    
-    strsize         = (dbUser.GetLength() + 1) * 2;
-    char *pDBUserId = new char[strsize];
-    wcstombs_s(NULL, pDBUserId, strsize, dbUser, _TRUNCATE);
-
-    strsize         = (dbPasswd.GetLength() + 1) * 2;
-    char *pDBPasswd = new char[strsize];
-    wcstombs_s(NULL, pDBPasswd, strsize, dbPasswd, _TRUNCATE);
-
+	CString username, password;
+	GetDlgItemText(IDC_USERNAME, username);
+	GetDlgItemText(IDC_PASSWORD, password);
     try {
-        mdldb::Connector connection(pDBHostPort, pDBUserId, pDBPasswd);
-        CEntryDlg entryDlg(connection);
+        m_conn.dbconnect();
+		m_conn.auth(CStringToString(username), CStringToString(password));
+        CEntryDlg entryDlg(m_conn);
 		this->ShowWindow(SW_HIDE);
         entryDlg.DoModal();
 		this->EndDialog(ID_EXIT);
-        delete pDBHostPort, pDBUserId, pDBPasswd;
     } catch (mdldb::MDLDB_Exception& e) {
-        delete pDBHostPort, pDBUserId, pDBPasswd;
         switch (e.get_error_code()) {
-        case MDLDB_CONNECTION_FAIL:
+		case mdldb::CONNECTION_FAIL:
             MessageBox(L"不能连接到数据库，请检查网络环境。", L"数据库连接");
             break;
-        case MDLDB_CONNECTION_REFUSED:
+        case mdldb::CONNECTION_REFUSED:
             MessageBox(L"连接被拒绝，请检查用户名和密码。", L"数据库连接");
             break;
+		case mdldb::NO_USER:
+			MessageBox(L"没有这个用户。", L"登录");
+			break;
+		case mdldb::INCORRECT_PASSWD:
+			MessageBox(L"密码错误。", L"登录");
+			break;
+		case mdldb::NO_PERMISSION:
+			MessageBox(L"您没有权限使用本程序。", L"登录");
+			break;
         default:
             MessageBox(CString(e.what()), L"数据库连接");
             break;
@@ -217,8 +209,15 @@ void CFP_AttendanceDlg::OnBnClickedConnect()
     }
 }
 
-void CFP_AttendanceDlg::OnBnClickedExit()
+void CLoginDlg::OnBnClickedExit()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	this->EndDialog(ID_EXIT);
+}
+
+void CLoginDlg::On32772()
+{
+	CDialog* dlg = new CDialog();
+	CDbconfig dbConfigDlg(m_conn);
+	dbConfigDlg.DoModal();
 }

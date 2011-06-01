@@ -19,7 +19,7 @@ namespace mdldb{
 
 	MDLDB_Exception::MDLDB_Exception() : std::runtime_error("")
 	{
-		this->err_no = MDLDB_GENERAL_ERROR;
+		this->err_no = GENERAL_ERROR;
 	}
 
 	int MDLDB_Exception::get_error_code() const

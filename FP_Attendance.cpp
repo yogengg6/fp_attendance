@@ -11,7 +11,7 @@
 
 #include "stdafx.h"
 #include "FP_Attendance.h"
-#include "FP_AttendanceDlg.h"
+#include "LoginDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -66,7 +66,7 @@ BOOL CFP_AttendanceApp::InitInstance()
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
 
-	CFP_AttendanceDlg dlg;
+	CLoginDlg dlg;
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)

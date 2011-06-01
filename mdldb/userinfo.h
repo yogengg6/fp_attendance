@@ -41,5 +41,5 @@ namespace mdldb
 		std::string				m_fullname;
 		size_t					m_fpsize;
 		const byte*				m_fpdata;
-	} ;
+	};
 }
