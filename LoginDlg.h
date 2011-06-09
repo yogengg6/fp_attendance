@@ -11,14 +11,19 @@
 
 #pragma once
 
-#include "mdldb/connector.h"
+#include "mdldb/Mdldb.h"
 
 // CLoginDlg 对话框
 class CLoginDlg : public CDialog
 {
 // 构造
 public:
-	CLoginDlg(CWnd* pParent = NULL);	// 标准构造函数
+	CLoginDlg(string dbhost,
+			  string dbport,
+			  string dbuser,
+			  string dbpasswd,
+			  string passwordsalt,
+			  CWnd* pParent = NULL);	// 标准构造函数
 
 // 对话框数据
 	enum { IDD = IDD_FP_ATTENDANCE_DIALOG };
@@ -31,7 +36,7 @@ public:
 protected:
 	HICON m_hIcon;
 
-	mdldb::Connector m_conn;
+	mdldb::Mdldb m_mdl;
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();

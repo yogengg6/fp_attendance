@@ -19,14 +19,14 @@
 
 IMPLEMENT_DYNAMIC(CRegisterDlg, CDialog)
 
-CRegisterDlg::CRegisterDlg(mdldb::Connector& conn, CWnd* pParent /*=NULL*/)
+CRegisterDlg::CRegisterDlg(mdldb::Mdldb& mdl, CWnd* pParent /*=NULL*/)
 	:	CDialog(CRegisterDlg::IDD, pParent),
 		m_hOperationEnroll(0),
 		m_fxContext(0), m_mcContext(0),
 		m_TemplateArray(NULL),
 		m_nRegFingerprint(0),
 		m_mcRegOptions(FT_DEFAULT_REG),
-		m_conn(conn)
+		m_mdl(mdl)
 {
 	FT_RETCODE rc = FT_OK;
 	if (FT_OK != (rc = FX_createContext(&m_fxContext))) {
@@ -135,7 +135,7 @@ void CRegisterDlg::OnBnClickedGetinfo()
 	GetDlgItemText(IDC_REG_IDNUMBER, idnumber);
 
 	try {
-		m_studentInfo = m_conn.get_student_info(CStringToString(idnumber));
+		m_studentInfo = m_mdl.get_student_info(CStringToString(idnumber));
 		string fullname = m_studentInfo.get_fullname();
 
 		CString verify_notice = CString(L"Ñ§ºÅ:") + CString(m_studentInfo.get_idnumber().c_str());
@@ -281,7 +281,7 @@ void CRegisterDlg::AddToEnroll(FT_IMAGE_PT pFingerprintImage,
 
                     if (FT_OK <= rc && bRegSucceeded == FT_TRUE) {
                         m_studentInfo.set_fpdata(iRcmdRegFtrLen, (byte*)pRegTemplate);
-                        m_conn.enroll(m_studentInfo);
+                        m_mdl.enroll(m_studentInfo);
 //                         m_RegTemplate.pbData = pRegTemplate;
 //                         m_RegTemplate.cbData = iRcmdRegFtrLen;
                         //Add Enroll code here

@@ -16,7 +16,7 @@
 #include "EntryDlg.h"
 
 #include "ultility.h"
-#include "mdldb/connector.h"
+#include "mdldb/Mdldb.h"
 #include "mdldb/exception.h"
 
 #ifdef _DEBUG
@@ -60,9 +60,14 @@ END_MESSAGE_MAP()
 
 
 
-CLoginDlg::CLoginDlg(CWnd* pParent /*=NULL*/)
+CLoginDlg::CLoginDlg(string dbhost,
+					 string dbport,
+					 string dbuser,
+					 string dbpasswd,
+					 string passwordsalt,
+					 CWnd* pParent /*=NULL*/)
 	: CDialog(CLoginDlg::IDD, pParent),
-	m_conn("172.16.81.156", "3306", "attendance", "attendance")
+	m_mdl(dbhost, dbport, dbuser, dbpasswd, passwordsalt)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -177,9 +182,9 @@ void CLoginDlg::OnBnClickedConnect()
 	GetDlgItemText(IDC_USERNAME, username);
 	GetDlgItemText(IDC_PASSWORD, password);
     try {
-        m_conn.dbconnect();
-		m_conn.auth(CStringToString(username), CStringToString(password));
-        CEntryDlg entryDlg(m_conn);
+        m_mdl.connect();
+		m_mdl.auth(CStringToString(username), CStringToString(password));
+        CEntryDlg entryDlg(m_mdl);
 		this->ShowWindow(SW_HIDE);
         entryDlg.DoModal();
 		this->EndDialog(ID_EXIT);
@@ -218,6 +223,6 @@ void CLoginDlg::OnBnClickedExit()
 void CLoginDlg::On32772()
 {
 	CDialog* dlg = new CDialog();
-	CDbconfig dbConfigDlg(m_conn);
+	CDbconfig dbConfigDlg(m_mdl);
 	dbConfigDlg.DoModal();
 }

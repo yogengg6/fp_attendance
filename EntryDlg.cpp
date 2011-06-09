@@ -20,8 +20,8 @@
 
 IMPLEMENT_DYNAMIC(CEntryDlg, CDialog)
 
-CEntryDlg::CEntryDlg(mdldb::Connector& conn, CWnd* pParent /*=NULL*/)
-	:	CDialog(CEntryDlg::IDD, pParent), m_conn(conn),
+CEntryDlg::CEntryDlg(mdldb::Mdldb& mdl, CWnd* pParent /*=NULL*/)
+	:	CDialog(CEntryDlg::IDD, pParent), m_mdl(mdl),
 		m_nextButton(NULL),
 		m_courseComboBox(NULL),
 		m_sessionComboBox(NULL)
@@ -51,7 +51,7 @@ BOOL CEntryDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	if (! m_conn.connected())
+	if (! m_mdl.connected())
 		return FALSE;
 
 	m_nextButton	  = (CButton *)	 GetDlgItem(ID_NEXT);
@@ -61,7 +61,7 @@ BOOL CEntryDlg::OnInitDialog()
 	m_static_session  = (CStatic *)  GetDlgItem(IDC_ENTRY_STATIC_SESSION);
 
 	try {
-		m_courseInfo = m_conn.get_all_course();
+		m_courseInfo = m_mdl.get_all_course();
 	} catch (mdldb::MDLDB_Exception& e) {
 		MessageBox(CString(e.what()), L"数据库连接");
 	}
@@ -94,7 +94,7 @@ void CEntryDlg::OnBnClickedNext()
 	switch (GetCheckedRadioButton(IDC_REGISTER, IDC_ATTENDANT)) {
 	case IDC_REGISTER:
 		{
-			CRegisterDlg regDlg(m_conn);
+			CRegisterDlg regDlg(m_mdl);
 			this->ShowWindow(SW_HIDE);
 			if (regDlg.DoModal() == ID_EXIT)
 				this->EndDialog(ID_EXIT);
@@ -104,7 +104,7 @@ void CEntryDlg::OnBnClickedNext()
 		}
 	case IDC_ATTENDANT:
 		{
-			CAttendanceDlg attdDlg(m_conn);
+			CAttendanceDlg attdDlg(m_mdl);
 			this->ShowWindow(SW_HIDE);
 			if (attdDlg.DoModal() == ID_EXIT)
 				this->EndDialog(ID_EXIT);
@@ -125,11 +125,11 @@ void CEntryDlg::OnBnClickedAttendant()
 {
 	m_static_course->EnableWindow(TRUE);
 	m_courseComboBox->EnableWindow(TRUE);
-	if (m_conn.course_associated() && m_conn.course_has_session()) {
+	if (m_mdl.course_associated() && m_mdl.course_has_session()) {
 		m_static_session->EnableWindow(TRUE);
 		m_sessionComboBox->EnableWindow(TRUE);
 	}
-	if (m_conn.session_associated())
+	if (m_mdl.session_associated())
 		m_nextButton->EnableWindow(TRUE);
 	else
 		m_nextButton->EnableWindow(FALSE);
@@ -147,8 +147,8 @@ void CEntryDlg::OnBnClickedRegister()
 void CEntryDlg::OnCbnSelendokCourse()
 {
 	int index = m_courseComboBox->GetCurSel();
-	m_conn.associate_course(m_courseInfo[index].id);
-	if (m_conn.course_has_session()) {
+	m_mdl.associate_course(m_courseInfo[index].id);
+	if (m_mdl.course_has_session()) {
 		m_static_session->EnableWindow(TRUE);
 		m_sessionComboBox->EnableWindow(TRUE);
 	}
@@ -157,13 +157,13 @@ void CEntryDlg::OnCbnSelendokCourse()
 void CEntryDlg::OnCbnSelendokSession()
 {
 	int index = m_sessionComboBox->GetCurSel();
-	m_conn.associate_session(m_session[index]);
+	m_mdl.associate_session(m_session[index]);
 	m_nextButton->EnableWindow(TRUE);
 }
 
 void CEntryDlg::OnCbnSelchangeCourse()
 {
-	if (m_conn.course_has_session()) {
+	if (m_mdl.course_has_session()) {
 		m_static_session->EnableWindow(TRUE);
 		m_sessionComboBox->EnableWindow(TRUE);
 	} else {
@@ -177,7 +177,7 @@ void CEntryDlg::OnCbnSetfocusSession()
 	m_sessionComboBox->Clear();
 
 	try {
-		m_session = m_conn.get_session_discription(  );
+		m_session = m_mdl.get_session_discription(  );
 	} catch (mdldb::MDLDB_Exception& e) {
 		MessageBox(CString(e.what()), L"数据库连接");
 	}
