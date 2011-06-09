@@ -18,11 +18,11 @@
 
 IMPLEMENT_DYNAMIC(CAttendanceDlg, CDialog)
 
-CAttendanceDlg::CAttendanceDlg(mdldb::Connector& conn, CWnd* pParent /*=NULL*/)
+CAttendanceDlg::CAttendanceDlg(mdldb::Mdldb& mdl, CWnd* pParent /*=NULL*/)
 	:	CDialog(CAttendanceDlg::IDD, pParent), 
 		m_hOperationVerify(0),
 		m_fxContext(0), m_mcContext(0),
-		m_conn(conn),
+		m_mdl(mdl),
 		m_notify(NULL)
 {
 	FT_RETCODE rc = FT_OK;
@@ -75,13 +75,13 @@ BOOL CAttendanceDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	if (! m_conn.connected())
+	if (! m_mdl.connected())
 		return FALSE;
 
-	m_notify			= (CListBox *) GetDlgItem(IDC_ATTENDANT_NOTIFY);
+	m_notify = (CListBox *) GetDlgItem(IDC_ATTENDANT_NOTIFY);
 
 	try {
-		m_conn.get_course_student_info(m_student_info);
+		m_mdl.get_course_student_info(m_student_info);
 	} catch (mdldb::MDLDB_Exception& e) {
 		MessageBox(CString(e.what()), L"考勤");
 	}
@@ -206,7 +206,7 @@ LRESULT CAttendanceDlg::OnFpNotify(WPARAM wParam, LPARAM lParam) {
 			if ((index = MatchFeatures(fpImage)) >= 0) {
 				string& idnumber = m_student_info[index].get_idnumber();
 				string& fullname = m_student_info[index].get_fullname();
-				m_conn.attendant(idnumber);
+				m_mdl.attendant(idnumber);
 				SetDlgItemText(IDC_ATTENDANT_IDNUMBER, CString(idnumber.c_str()));
 				SetDlgItemText(IDC_ATTENDANT_FULLNAME, stringToCString(fullname));
 				AddStatus(_T("您的出勤信息登入成功，祝您愉快！"));

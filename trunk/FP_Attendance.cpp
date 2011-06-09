@@ -10,8 +10,11 @@
 //
 
 #include "stdafx.h"
+#include <fstream>
+
 #include "FP_Attendance.h"
 #include "LoginDlg.h"
+#include "ultility.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -43,6 +46,7 @@ CFP_AttendanceApp theApp;
 
 BOOL CFP_AttendanceApp::InitInstance()
 {
+	typedef unsigned char byte;
 	// 如果一个运行在 Windows XP 上的应用程序清单指定要
 	// 使用 ComCtl32.dll 版本 6 或更高版本来启用可视化方式，
 	//则需要 InitCommonControlsEx()。否则，将无法创建窗口。
@@ -66,7 +70,12 @@ BOOL CFP_AttendanceApp::InitInstance()
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
 
-	CLoginDlg dlg;
+	Config cfg;
+	if (!cfg.load()) {
+		cfg.create();
+		cfg.save();
+	};
+	CLoginDlg dlg(cfg.m_dbhost, cfg.m_dbport, cfg.m_dbuser, cfg.m_dbpasswd, cfg.m_passwordsalt);
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)

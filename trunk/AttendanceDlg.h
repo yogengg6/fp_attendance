@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "afxwin.h"
-#include "mdldb/connector.h"
+#include "mdldb/Mdldb.h"
 
 using namespace std;
 
@@ -23,7 +23,7 @@ class CAttendanceDlg : public CDialog
 	DECLARE_DYNAMIC(CAttendanceDlg)
 
 public:
-	CAttendanceDlg(mdldb::Connector& conn, CWnd* pParent = NULL);
+	CAttendanceDlg(mdldb::Mdldb& conn, CWnd* pParent = NULL);
 	virtual ~CAttendanceDlg();
 
 	void AddStatus(LPCTSTR s);
@@ -44,7 +44,7 @@ protected:
 	DATA_BLOB       m_RegTemplate;
 
 	//数据结构成员变量
-	mdldb::Connector			m_conn;
+	mdldb::Mdldb				m_mdl;
 	vector<mdldb::StudentInfo>	m_student_info;
 
 	virtual void DoDataExchange(CDataExchange* pDX);

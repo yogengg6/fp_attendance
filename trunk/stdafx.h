@@ -71,4 +71,4 @@
 
 #include "mdldb/userinfo.h"
 #include "mdldb/exception.h"
-#include "mdldb/connector.h"
+#include "mdldb/Mdldb.h"

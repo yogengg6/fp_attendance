@@ -13,7 +13,7 @@ using namespace std;
 #include <vector>
 
 #include "afxwin.h"
-#include "mdldb/connector.h"
+#include "mdldb/Mdldb.h"
 
 // CEntryDlg ¶Ô»°¿ò
 
@@ -22,7 +22,7 @@ class CEntryDlg : public CDialog
 	DECLARE_DYNAMIC(CEntryDlg)
 
 public:
-	CEntryDlg(mdldb::Connector &conn, CWnd* pParent = NULL);
+	CEntryDlg(mdldb::Mdldb &mdl, CWnd* pParent = NULL);
 	virtual ~CEntryDlg();
 
 	enum { IDD = IDD_ENTRY };
@@ -42,7 +42,7 @@ protected:
 	CComboBox *					m_sessionComboBox;
 
 private:
-	mdldb::Connector m_conn;
+	mdldb::Mdldb m_mdl;
 
 	DECLARE_MESSAGE_MAP()
 public:

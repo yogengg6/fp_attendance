@@ -11,9 +11,9 @@
 
 IMPLEMENT_DYNAMIC(CDbconfig, CDialog)
 
-CDbconfig::CDbconfig(mdldb::Connector& conn, CWnd* pParent /*=NULL*/)
+CDbconfig::CDbconfig(mdldb::Mdldb& mdl, CWnd* pParent /*=NULL*/)
 	: CDialog(CDbconfig::IDD, pParent),
-	m_conn(conn)
+	m_mdl(mdl)
 {
 }
 
@@ -30,10 +30,12 @@ BOOL CDbconfig::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	SetDlgItemText(IDC_DBHOST, L"172.16.81.156");
-	SetDlgItemText(IDC_DBPORT, L"3306");
-	SetDlgItemText(IDC_DBUSER, L"attendance");
-	SetDlgItemText(IDC_DBPASSWD, L"attendance");
+	cfg.load();
+
+	SetDlgItemText(IDC_DBHOST, stringToCString(cfg.m_dbhost));
+	SetDlgItemText(IDC_DBPORT, stringToCString(cfg.m_dbport));
+	SetDlgItemText(IDC_DBUSER, stringToCString(cfg.m_dbuser));
+	SetDlgItemText(IDC_DBPASSWD, stringToCString(cfg.m_dbpasswd));
 
 	return TRUE;
 }
@@ -54,9 +56,14 @@ void CDbconfig::OnBnClickedOk()
 	GetDlgItemText(IDC_DBUSER, dbUser);
 	GetDlgItemText(IDC_DBPASSWD, dbPasswd);
 
-	m_conn.set_dbhost(CStringToString(dbHost), CStringToString(dbPort));
-	m_conn.set_dbuser(CStringToString(dbUser));
-	m_conn.set_dbpasswd(CStringToString(dbPasswd));
+	cfg.m_dbhost = CStringToString(dbHost);
+	cfg.m_dbport = CStringToString(dbPort);
+	cfg.m_dbuser = CStringToString(dbPort);
+	cfg.m_dbpasswd = CStringToString(dbPasswd);
+
+	m_mdl.set_dbhost(cfg.m_dbhost, cfg.m_dbport);
+	m_mdl.set_dbuser(cfg.m_dbuser);
+	m_mdl.set_dbpasswd(cfg.m_dbpasswd);
 
 	OnOK();
 }

@@ -314,19 +314,27 @@
 			Name="mdldb"
 			>
 			<File
-				RelativePath=".\mdldb\connector.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\mdldb\connector.h"
-				>
-			</File>
-			<File
 				RelativePath=".\mdldb\exception.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\mdldb\exception.h"
+				>
+			</File>
+			<File
+				RelativePath=".\mdldb\Mdldb.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\mdldb\Mdldb.h"
+				>
+			</File>
+			<File
+				RelativePath=".\mdldb\Mdldb_base.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\mdldb\Mdldb_base.h"
 				>
 			</File>
 			<File

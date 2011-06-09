@@ -17,7 +17,7 @@ class CRegisterDlg : public CDialog
 	DECLARE_DYNAMIC(CRegisterDlg)
 
 public:
-	CRegisterDlg(mdldb::Connector& conn, CWnd* pParent = NULL);   // 标准构造函数
+	CRegisterDlg(mdldb::Mdldb& mdl, CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~CRegisterDlg();
 
 	void AddStatus(LPCTSTR s);
@@ -53,7 +53,7 @@ private:
 	//数据结构成员变量
 	CString				m_idnumber;
 	mdldb::StudentInfo  m_studentInfo;
-	mdldb::Connector	m_conn;
+	mdldb::Mdldb	m_mdl;
 
 	DECLARE_MESSAGE_MAP()
 
