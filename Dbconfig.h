@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ultility.h"
-
+//
 // CDbconfig ¶Ô»°¿ò
 
 class CDbconfig : public CDialog
