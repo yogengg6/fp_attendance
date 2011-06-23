@@ -69,8 +69,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="mysqlcppconn.lib mysqlcppconn-static.lib DPFPApi.lib dpHFtrEx.lib dpHMatch.lib cryptlib.lib"
-				LinkIncremental="1"
+				AdditionalDependencies="mysqlcppconn.lib mysqlcppconn-static.lib DPFpUI.lib DPFPApi.lib dpHFtrEx.lib dpHMatch.lib cryptlib.lib"
+				LinkIncremental="0"
 				AdditionalLibraryDirectories="D:\Dev\cryptopp561\Win32\Output\Debug;&quot;D:\software\DigitalPersona\One Touch SDK\C-C++\Lib\win32&quot;;&quot;D:\software\MySQL\MySQL Connector C++ 1.1.0\lib\opt&quot;"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
@@ -130,7 +130,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;D:\software\DigitalPersona\One Touch SDK\C-C++\Include&quot;;D:\Dev\boost_1_46_1;&quot;D:\software\MySQL\MySQL Connector C++ 1.1.0\include&quot;"
+				AdditionalIncludeDirectories="D:\Dev\cryptopp561\;&quot;D:\software\DigitalPersona\One Touch SDK\C-C++\Include&quot;;D:\Dev\boost_1_46_1;&quot;D:\software\MySQL\MySQL Connector C++ 1.1.0\include&quot;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="2"
@@ -153,9 +153,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="mysqlcppconn.lib DPFPApi.lib dpHFtrEx.lib dpHMatch.lib"
+				AdditionalDependencies="mysqlcppconn.lib DPFpUI.lib DPFPApi.lib dpHFtrEx.lib dpHMatch.lib cryptlib.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;D:\software\DigitalPersona\One Touch SDK\C-C++\Lib\win32&quot;;&quot;D:\software\MySQL\MySQL Connector C++ 1.1.0\lib&quot;"
+				AdditionalLibraryDirectories="D:\Dev\cryptopp561\Win32\Output\Release;&quot;D:\software\DigitalPersona\One Touch SDK\C-C++\Lib\win32&quot;;&quot;D:\software\MySQL\MySQL Connector C++ 1.1.0\lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -194,6 +194,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\Config.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FP_Attendance.cpp"
 				>
 			</File>
@@ -227,6 +231,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\Config.h"
+				>
+			</File>
 			<File
 				RelativePath=".\FP_Attendance.h"
 				>
@@ -278,11 +286,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Dbconfig.cpp"
+				RelativePath=".\ConfigDlg.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Dbconfig.h"
+				RelativePath=".\ConfigDlg.h"
 				>
 			</File>
 			<File
@@ -294,19 +302,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FpManageDlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FpManageDlg.h"
+				>
+			</File>
+			<File
 				RelativePath=".\LoginDlg.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\LoginDlg.h"
-				>
-			</File>
-			<File
-				RelativePath=".\RegisterDlg.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\RegisterDlg.h"
 				>
 			</File>
 		</Filter>

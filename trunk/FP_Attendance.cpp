@@ -15,6 +15,7 @@
 #include "FP_Attendance.h"
 #include "LoginDlg.h"
 #include "ultility.h"
+#include "Config.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

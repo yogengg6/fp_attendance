@@ -12,7 +12,7 @@
 #include "stdafx.h"
 #include "FP_Attendance.h"
 #include "LoginDlg.h"
-#include "Dbconfig.h"
+#include "ConfigDlg.h"
 #include "EntryDlg.h"
 
 #include "ultility.h"
@@ -85,6 +85,7 @@ BEGIN_MESSAGE_MAP(CLoginDlg, CDialog)
 	ON_BN_CLICKED(ID_CONNECT, &CLoginDlg::OnBnClickedConnect)
 	ON_BN_CLICKED(ID_EXIT, &CLoginDlg::OnBnClickedExit)
 	ON_COMMAND(ID_32772, &CLoginDlg::On32772)
+	ON_COMMAND(ID_32771, &CLoginDlg::OnClickAbout)
 END_MESSAGE_MAP()
 
 
@@ -216,7 +217,6 @@ void CLoginDlg::OnBnClickedConnect()
 
 void CLoginDlg::OnBnClickedExit()
 {
-	// TODO: 在此添加控件通知处理程序代码
 	this->EndDialog(ID_EXIT);
 }
 
@@ -225,4 +225,10 @@ void CLoginDlg::On32772()
 	CDialog* dlg = new CDialog();
 	CDbconfig dbConfigDlg(m_mdl);
 	dbConfigDlg.DoModal();
+}
+
+void CLoginDlg::OnClickAbout()
+{
+	CAboutDlg dlg;
+	dlg.DoModal();
 }

@@ -48,4 +48,5 @@ public:
 	afx_msg void OnBnClickedConnect();
 	afx_msg void OnBnClickedExit();
 	afx_msg void On32772();
+	afx_msg void OnClickAbout();
 };

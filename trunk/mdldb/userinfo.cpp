@@ -1,31 +1,36 @@
 #include "StdAfx.h"
 #include "userinfo.h"
 
+using namespace std;
+
 namespace mdldb
 {
 	StudentInfo::StudentInfo()
 	{
 		m_idnumber = "";
 		m_fullname = "";
-		m_fpsize = 0;
-		m_fpdata = NULL;
+		ZeroMemory(&m_fpdata, sizeof(Fpdata));
 	}
 
-	StudentInfo::StudentInfo(const std::string&		idnumber, 
-							 const std::string&		fullname, 
-							 const size_t			fpsize, 
-							 const byte*			fpdata)
+	StudentInfo::StudentInfo(const string& idnumber, 
+							 const Fpdata& fpdata)
+	{
+		m_idnumber	= idnumber;
+		CopyMemory(&m_fpdata, &fpdata, sizeof(Fpdata));
+	}
+
+	StudentInfo::StudentInfo(const string& idnumber, 
+							 const string& fullname, 
+							 const Fpdata& fpdata)
 	{
 		m_idnumber	= idnumber;
 		m_fullname	= fullname;
-
-		m_fpsize	= fpsize;
-		m_fpdata	= fpdata;
+		CopyMemory(&m_fpdata, &fpdata, sizeof(Fpdata));
 	}
 
 	StudentInfo::~StudentInfo()
 	{
-		if (m_fpdata != NULL)
-			delete m_fpdata;
+		if (m_fpdata.data != NULL)
+			delete m_fpdata.data;
 	}
 }
