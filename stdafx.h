@@ -53,22 +53,3 @@
 #pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 #endif
-
-#include <dpDefs.h>
-#include <dpRcodes.h>
-#include <DPDevClt.h>
-#include <dpFtrEx.h>
-#include <dpMatch.h>
-#include <DpUIApi.h>
-
-#include <mysql_driver.h>
-#include <mysql_connection.h>
-#include <cppconn/connection.h>
-#include <cppconn/driver.h>
-#include <cppconn/exception.h>
-#include <cppconn/statement.h>
-#include <cppconn/prepared_statement.h>
-
-#include "mdldb/userinfo.h"
-#include "mdldb/exception.h"
-#include "mdldb/Mdldb.h"

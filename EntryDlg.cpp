@@ -10,10 +10,18 @@
 //
 
 #include "stdafx.h"
+
+#include <dpDefs.h>
+#include <dpRcodes.h>
+#include <DPDevClt.h>
+#include <dpFtrEx.h>
+#include <dpMatch.h>
+
+
 #include "FP_Attendance.h"
 #include "ultility.h"
 #include "EntryDlg.h"
-#include "RegisterDlg.h"
+#include "FpManageDlg.h"
 #include "AttendanceDlg.h"
 
 // CEntryDlg 对话框
@@ -61,11 +69,12 @@ BOOL CEntryDlg::OnInitDialog()
 	m_static_session  = (CStatic *)  GetDlgItem(IDC_ENTRY_STATIC_SESSION);
 
 	try {
-		m_courseInfo = m_mdl.get_all_course();
+		m_courseInfo = m_mdl.get_authorized_course();
 	} catch (mdldb::MDLDB_Exception& e) {
 		MessageBox(CString(e.what()), L"数据库连接");
 	}
 
+	CheckRadioButton(IDC_ATTENDANT, IDC_ENTRY_FPMANAGE, IDC_ENTRY_FPMANAGE);
 	SetDlgItemText(IDC_COURSE, L"请选择课程");
 
 	for (unsigned int i = 0; i < m_courseInfo.size(); ++i)
@@ -81,9 +90,9 @@ BEGIN_MESSAGE_MAP(CEntryDlg, CDialog)
 	ON_CBN_SELENDOK(IDC_COURSE, &CEntryDlg::OnCbnSelendokCourse)
 	ON_CBN_SELENDOK(IDC_SESSION, &CEntryDlg::OnCbnSelendokSession)
 	ON_BN_CLICKED(IDC_ATTENDANT, &CEntryDlg::OnBnClickedAttendant)
-	ON_BN_CLICKED(IDC_REGISTER, &CEntryDlg::OnBnClickedRegister)
 	ON_CBN_SELCHANGE(IDC_COURSE, &CEntryDlg::OnCbnSelchangeCourse)
 	ON_CBN_SETFOCUS(IDC_SESSION, &CEntryDlg::OnCbnSetfocusSession)
+	ON_BN_CLICKED(IDC_ENTRY_FPMANAGE, &CEntryDlg::OnBnClickedEntryFpmanage)
 END_MESSAGE_MAP()
 
 
@@ -91,12 +100,12 @@ END_MESSAGE_MAP()
 
 void CEntryDlg::OnBnClickedNext()
 {
-	switch (GetCheckedRadioButton(IDC_REGISTER, IDC_ATTENDANT)) {
-	case IDC_REGISTER:
+	switch (GetCheckedRadioButton(IDC_ATTENDANT, IDC_ENTRY_FPMANAGE)) {
+	case IDC_ENTRY_FPMANAGE:
 		{
-			CRegisterDlg regDlg(m_mdl);
+			CFpManageDlg fpMngDlg(m_mdl);
 			this->ShowWindow(SW_HIDE);
-			if (regDlg.DoModal() == ID_EXIT)
+			if (fpMngDlg.DoModal() == ID_EXIT)
 				this->EndDialog(ID_EXIT);
 			else
 				this->ShowWindow(SW_SHOW);
@@ -121,6 +130,16 @@ void CEntryDlg::OnBnClickedExit()
 {
 	this->EndDialog(ID_EXIT);
 }
+
+void CEntryDlg::OnBnClickedEntryFpmanage()
+{
+	m_nextButton->EnableWindow(TRUE);
+	m_static_course->EnableWindow(FALSE);
+	m_static_session->EnableWindow(FALSE);
+	m_courseComboBox->EnableWindow(FALSE);
+	m_sessionComboBox->EnableWindow(FALSE);
+}
+
 void CEntryDlg::OnBnClickedAttendant()
 {
 	m_static_course->EnableWindow(TRUE);
@@ -133,15 +152,6 @@ void CEntryDlg::OnBnClickedAttendant()
 		m_nextButton->EnableWindow(TRUE);
 	else
 		m_nextButton->EnableWindow(FALSE);
-}
-
-void CEntryDlg::OnBnClickedRegister()
-{
-	m_nextButton->EnableWindow(TRUE);
-	m_static_course->EnableWindow(FALSE);
-	m_static_session->EnableWindow(FALSE);
-	m_courseComboBox->EnableWindow(FALSE);
-	m_sessionComboBox->EnableWindow(FALSE);
 }
 
 void CEntryDlg::OnCbnSelendokCourse()

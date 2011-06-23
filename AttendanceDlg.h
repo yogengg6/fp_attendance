@@ -9,7 +9,14 @@
  */
 #pragma once
 
+#include "stdafx.h"
+
 #include <vector>
+#include <WinCrypt.h>
+
+#include <dpDefs.h>
+#include <dpRcodes.h>
+#include <DPDevClt.h>
 
 #include "afxwin.h"
 #include "mdldb/Mdldb.h"

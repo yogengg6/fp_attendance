@@ -9,12 +9,22 @@
  */
 
 #include "stdafx.h"
+
+#include <dpDefs.h>
+#include <dpRcodes.h>
+#include <DPDevClt.h>
+#include <dpFtrEx.h>
+#include <dpMatch.h>
+
 #include "ultility.h"
 #include "FP_Attendance.h"
 #include "AttendanceDlg.h"
+#include "mdldb/userinfo.h"
 #include "mdldb/exception.h"
 
 // CAttendanceDlg 对话框
+
+using namespace mdldb;
 
 IMPLEMENT_DYNAMIC(CAttendanceDlg, CDialog)
 
@@ -25,21 +35,6 @@ CAttendanceDlg::CAttendanceDlg(mdldb::Mdldb& mdl, CWnd* pParent /*=NULL*/)
 		m_mdl(mdl),
 		m_notify(NULL)
 {
-	FT_RETCODE rc = FT_OK;
-	if (FT_OK != (rc = FX_createContext(&m_fxContext))) {
-		MessageBox(L"创建特征提取上下文失败。", L"指纹注册", MB_OK | MB_ICONSTOP);
-	}
-
-	if (FT_OK != (rc = MC_createContext(&m_mcContext))) {
-		MessageBox(_T("创建比对上下文失败。"), _T("指纹注册"), MB_OK | MB_ICONSTOP);
-	}
-
-	MC_SETTINGS mcSettings = {0};
-	if (FT_OK != (rc = MC_getSettings(&mcSettings))) {
-		MessageBox(_T("获取预设置指纹特征集提取次数失败。"), _T("指纹注册"), MB_OK | MB_ICONSTOP);
-	}
-
-	::ZeroMemory(&m_RegTemplate, sizeof(m_RegTemplate));
 }
 
 CAttendanceDlg::~CAttendanceDlg()
@@ -78,12 +73,27 @@ BOOL CAttendanceDlg::OnInitDialog()
 	if (! m_mdl.connected())
 		return FALSE;
 
+	::ZeroMemory(&m_RegTemplate, sizeof(m_RegTemplate));
+
 	m_notify = (CListBox *) GetDlgItem(IDC_ATTENDANT_NOTIFY);
 
 	try {
 		m_mdl.get_course_student_info(m_student_info);
 	} catch (mdldb::MDLDB_Exception& e) {
 		MessageBox(CString(e.what()), L"考勤");
+	}
+
+	if (FT_OK != FX_createContext(&m_fxContext)) {
+		MessageBox(L"创建特征提取上下文失败。", L"指纹注册", MB_OK | MB_ICONSTOP);
+	}
+
+	if (FT_OK != MC_createContext(&m_mcContext)) {
+		MessageBox(_T("创建比对上下文失败。"), _T("指纹注册"), MB_OK | MB_ICONSTOP);
+	}
+
+	MC_SETTINGS mcSettings = {0};
+	if (FT_OK != MC_getSettings(&mcSettings)) {
+		MessageBox(_T("获取预设置指纹特征集提取次数失败。"), _T("指纹注册"), MB_OK | MB_ICONSTOP);
 	}
 	
 	DPFPCreateAcquisition(	DP_PRIORITY_NORMAL, GUID_NULL, 
@@ -161,10 +171,12 @@ int CAttendanceDlg::MatchFeatures(DATA_BLOB* const fpImage)
 			FT_VER_SCORE VerScore = FT_UNKNOWN_SCORE;
 			double dFalseAcceptProbability = 0.0;
 
+			//由这里开始逐一比较
 			for (unsigned int i = 0; i < m_student_info.size(); ++i) {
+				Fpdata fpdata = m_student_info[i].get_fpdata();
 				rc = MC_verifyFeaturesEx(m_mcContext, 
-										 m_student_info[i].get_fpsize(), 
-										 m_student_info[i].get_fpdata(), 
+										 fpdata.size, 
+										 fpdata.data, 
 										 iRecommendedVerFtrLen,
 									 	 fpTemplate,
 										 0,
@@ -199,7 +211,6 @@ LRESULT CAttendanceDlg::OnFpNotify(WPARAM wParam, LPARAM lParam) {
 	switch(wParam) {
 	case WN_COMPLETED:
 		{
-			AddStatus(_T("指纹已捕获"));
 			DATA_BLOB* fpImage = reinterpret_cast<DATA_BLOB*>(lParam);
 			int index;
 

@@ -51,7 +51,7 @@ public:
 	afx_msg void OnBnClickedNext();
 	afx_msg void OnBnClickedExit();
 	afx_msg void OnBnClickedAttendant();
-	afx_msg void OnBnClickedRegister();
 	afx_msg void OnCbnSelchangeCourse();
 	afx_msg void OnCbnSetfocusSession();
+	afx_msg void OnBnClickedEntryFpmanage();
 };
