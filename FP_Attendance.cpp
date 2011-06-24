@@ -76,7 +76,7 @@ BOOL CFP_AttendanceApp::InitInstance()
 		cfg.create();
 		cfg.save();
 	};
-	CLoginDlg dlg(cfg.m_dbhost, cfg.m_dbport, cfg.m_dbuser, cfg.m_dbpasswd, cfg.m_passwordsalt);
+	CLoginDlg dlg(cfg);
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)

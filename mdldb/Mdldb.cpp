@@ -15,13 +15,10 @@ using namespace CryptoPP;
 
 namespace mdldb{
 
-	string								Mdldb::m_passwordsalt = "";
-	bool								Mdldb::m_course_has_session = false;
-	unsigned int						Mdldb::m_userid = 2;
-	unsigned int						Mdldb::m_course_id = 0;
-	unsigned int						Mdldb::m_statuses[4] = {0};
-	string								Mdldb::m_statuesset = "";
-	SessionInfo							Mdldb::m_sess_info = {0};
+	string		 Mdldb::m_passwordsalt = "";
+	unsigned int Mdldb::m_userid = 2;
+	Course		 Mdldb::m_course = {0};
+	Session		 Mdldb::m_sess   = {0};
 
 	Mdldb::Mdldb(const string& db_host,
 				 const string& db_port,
@@ -66,7 +63,7 @@ namespace mdldb{
 				throw MDLDB_Exception("no such user", NO_USER);
 			rs->next();
 			m_userid = rs->getUInt("id");
-			m_sess_info.lasttakenby = m_userid;
+			m_sess.lasttakenby = m_userid;
 
 			//验证用户密码
 			const char* sql_auth_password = 
@@ -90,12 +87,12 @@ namespace mdldb{
 		}
 	}
 
-	void Mdldb::associate_course(uint32_t id)
+	void Mdldb::associate_course(uint id)
 	{
 		if (!connected())
 			throw MDLDB_Exception("没有连接到数据库", DISCONNECTED);
 
-		m_course_id = id;
+		m_course.id = id;
 
 		try {
 			int i = 0;
@@ -108,13 +105,13 @@ namespace mdldb{
 			sql_container << id;
 			auto_ptr<ResultSet> rs(sql_container.exeQuery());
 			if (rs->rowsCount() != 4) {
-				m_course_has_session = false;
+				m_course.has_session = false;
 				return;
 			}
 			else
-				m_course_has_session = true;
+				m_course.has_session = true;
 			while (rs->next())
-				m_statuses[i++] = rs->getUInt("id");
+				m_sess.statuses[i++] = rs->getUInt("id");
 
 			const char* sql_statues_ordered = 
 				"SELECT id FROM mdl_attendance_statuses WHERE courseid=? \
@@ -127,12 +124,42 @@ namespace mdldb{
 			ostringstream sout;
 			while (rs->next())
 				sout << rs->getUInt("id") << ",";
-			m_statuesset = sout.str();
-			m_statuesset.erase(m_statuesset.end()-1);
+			m_sess.statuesset = sout.str();
+			m_sess.statuesset.erase(m_sess.statuesset.end()-1);
 
 		} catch (SQLException &e) {
 			throw MDLDB_Exception(e.what(), GENERAL_ERROR);
 		}
+	}
+
+	void Mdldb::get_authorized_course(vector<Course>& courses)
+	{
+		if (!connected())
+			throw MDLDB_Exception("没有连接到数据库", DISCONNECTED);
+
+		const char* sql = 
+			"SELECT id, fullname FROM mdl_course WHERE id IN \
+				(SELECT instanceid FROM mdl_context WHERE contextlevel=50 AND id IN \
+					(SELECT contextid FROM mdl_role_assignments WHERE userid=? AND roleid<=4)\
+				)";
+
+		try {
+			m_mdl->setSchema("moodle");
+
+			SQLContainer sql_container(m_mdl.get(), sql);
+			sql_container << m_userid;
+			auto_ptr<ResultSet> rs(sql_container.exeQuery());
+
+			courses = vector<Course>(rs->rowsCount());
+
+			for (int i = 0; rs->next(); ++i) {
+				courses[i].id = rs->getUInt("id");
+				courses[i].fullname = rs->getString("fullname");
+			}
+		} catch(SQLException& e) {
+			throw MDLDB_Exception(e.what(), GENERAL_ERROR);
+		}
+		
 	}
 
 	/**
@@ -157,7 +184,7 @@ namespace mdldb{
 			m_mdl->setSchema("moodle");
 
 			SQLContainer sql_container(m_mdl.get(), prep_sql);
-			sql_container << m_course_id << session << now;
+			sql_container << m_course.id << session << now;
 
 			auto_ptr<ResultSet> rs(sql_container.exeQuery());
 			switch (rs->rowsCount()) {
@@ -166,10 +193,10 @@ namespace mdldb{
 			break;
 		case 1:
 			rs->next();
-			m_sess_info.id = rs->getInt("id");
-			m_sess_info.lasttakenby = m_userid;
-			m_sess_info.sessdate = rs->getUInt("sessdate");
-			m_sess_info.duration = rs->getUInt("duration");
+			m_sess.id = rs->getInt("id");
+			m_sess.lasttakenby = m_userid;
+			m_sess.sessdate = rs->getUInt("sessdate");
+			m_sess.duration = rs->getUInt("duration");
 			break;
 		default:
 			throw MDLDB_Exception("[MDLDB]:duplicate session", DUPLICATE_SESSION);
@@ -178,48 +205,16 @@ namespace mdldb{
 		} catch(SQLException &e) {
 			throw MDLDB_Exception(e.what(), GENERAL_ERROR);
 		}
-		return m_sess_info.id > 0;
+		return m_sess.id > 0;
 	}
 
-	vector<CourseInfo> Mdldb::get_authorized_course()
-	{
-		if (!connected())
-			throw MDLDB_Exception("没有连接到数据库", DISCONNECTED);
-
-		const char* sql = 
-			"SELECT id, fullname FROM mdl_course WHERE id IN \
-				(SELECT instanceid FROM mdl_context WHERE contextlevel=50 AND id IN \
-					(SELECT contextid FROM mdl_role_assignments WHERE userid=? AND roleid<=4)\
-				)";
-
-		try {
-			m_mdl->setSchema("moodle");
-
-			SQLContainer sql_container(m_mdl.get(), sql);
-			sql_container << m_userid;
-			auto_ptr<ResultSet> rs(sql_container.exeQuery());
-
-			vector<CourseInfo> ci(rs->rowsCount());
-
-			for (int i = 0; rs->next(); ++i) {
-				ci[i].id = rs->getUInt("id");
-				ci[i].fullname = rs->getString("fullname");
-			}
-
-			return ci;
-		} catch(SQLException& e) {
-			throw MDLDB_Exception(e.what(), GENERAL_ERROR);
-		}
-		
-	}
-
-	vector<string> Mdldb::get_session_discription(uint32_t course_id)
+	void Mdldb::get_session_discription(vector<string>& sessions, uint32_t course_id)
 	{
 		if (!connected())
 			throw MDLDB_Exception("没有连接到数据库", DISCONNECTED);
 
 		if (course_id == 0)
-			course_id = m_course_id;
+			course_id = m_course.id;
 
 		uint32_t now = time(NULL);
 
@@ -234,18 +229,16 @@ namespace mdldb{
 			sql_container << course_id << now;
 			auto_ptr<ResultSet> rs(sql_container.exeQuery());
 
-			vector<string> session_info(rs->rowsCount());
+			sessions = vector<string>(rs->rowsCount());
 
 			for (int i = 0; rs->next(); ++i)
-				session_info[i] = rs->getString("description");
-
-			return session_info;
+				sessions[i] = rs->getString("description");
 		} catch(SQLException& e) {
 			throw MDLDB_Exception(e.what(), GENERAL_ERROR);
 		}
 	}
 
-	bool Mdldb::fpenroll(StudentInfo& stu_info)
+	bool Mdldb::fpenroll(Student& stu_info)
 	{
 		if (!connected())
 			throw MDLDB_Exception("没有连接到数据库", DISCONNECTED);
@@ -310,20 +303,20 @@ namespace mdldb{
 			rs->next();
 			studentid = rs->getUInt("id");
 
-			if (now <= m_sess_info.sessdate)
-				status = m_statuses[ATTEND];
-			else if (now <= m_sess_info.sessdate + m_sess_info.duration)
-				status = m_statuses[LATE];
+			if (now <= m_sess.sessdate)
+				status = m_sess.statuses[ATTEND];
+			else if (now <= m_sess.sessdate + m_sess.duration)
+				status = m_sess.statuses[LATE];
 			else
-				status = m_statuses[ABSENT];
+				status = m_sess.statuses[ABSENT];
 
 			//如果数据库存在考勤记录，更新之
 			const char* sql_update = 
 				"UPDATE mdl_attendance_log SET statusid=? \
-				WHERE sessionid=? AND studentid=?";
+				 WHERE sessionid=? AND studentid=?";
 			sql_container = SQLContainer(m_mdl.get(), sql_update);
-			sql_container << status << m_sess_info.id << studentid;
-			if ((rows_affected = sql_container.exeUpdate()) == 1)
+			sql_container << status << m_sess.id << studentid;
+			if ((rows_affected = sql_container.exeUpdate()) >= 1)
 				return true;
 			else if (rows_affected != 0)
 				throw MDLDB_Exception("内部错误", GENERAL_ERROR);
@@ -335,8 +328,8 @@ namespace mdldb{
 				VALUES(?, ?, ?, ?, ?, ?, ?)";
 
 			sql_container = SQLContainer(m_mdl.get(), sql_insert);
-			sql_container << m_sess_info.id << studentid << status 
-				<< m_statuesset << now << m_userid << "";
+			sql_container << m_sess.id << studentid << status 
+				<< m_sess.statuesset << now << m_userid << "";
 			sql_container.execute();
 
 			return true;
@@ -351,7 +344,7 @@ namespace mdldb{
 	 * 1.先根据courseid获取contextid:
 	 * 2.根据contextid得到课程所有学生的fpdata和fpsize(roleid为5代表学生)
 	 */
-	void Mdldb::get_course_student_info(vector<StudentInfo> &student_info)
+	void Mdldb::get_course_students(vector<Student>& students)
 	{
 		if (!connected())
 			throw MDLDB_Exception("没有连接到数据库", DISCONNECTED);
@@ -366,7 +359,7 @@ namespace mdldb{
 			const char* sql_context = 
 				"SELECT id FROM mdl_context WHERE instanceid=? AND contextlevel=50";
 			SQLContainer sql_container(m_mdl.get(), sql_context);
-			sql_container << m_course_id;
+			sql_container << m_course.id;
 			auto_ptr<ResultSet> rs(sql_container.exeQuery());
 			if (rs->rowsCount() != 1)
 				throw MDLDB_Exception("会话不唯一", GENERAL_ERROR);
@@ -388,11 +381,10 @@ namespace mdldb{
 			rs = auto_ptr<ResultSet>(sql_container.exeQuery());
 
 			if (rs->rowsCount() > 0) {
-				student_info = vector<StudentInfo>(rs->rowsCount());
-				vector<StudentInfo>::iterator it = student_info.begin();
+				students = vector<Student>(rs->rowsCount());
+				vector<Student>::iterator it = students.begin();
 
-				Fpdata fpdata;
-				ZeroMemory(&fpdata, sizeof(fpdata));
+				Fpdata fpdata = {0};
 
 				while (rs->next()) {
 					istream* is = NULL;
@@ -407,7 +399,8 @@ namespace mdldb{
 					if (fpdata.size != 0) {
 						fpdata.data = new byte[fpdata.size];
 						is->read((char*)fpdata.data, fpdata.size);
-					}
+					} else
+						fpdata.data = NULL;
 
 					it->set_fpdata(fpdata);
 					it++;
@@ -420,7 +413,7 @@ namespace mdldb{
 		}
 	}
 
-	vector<StudentInfo> Mdldb::get_student_info(const string& idnumber, size_t limit)
+	void Mdldb::get_students(vector<Student>& students, const string& idnumber, size_t limit)
 	{
 		if (!connected())
 			throw MDLDB_Exception("没有连接到数据库", DISCONNECTED);
@@ -432,16 +425,14 @@ namespace mdldb{
 			WHERE i.idnumber LIKE ? \
 			ORDER BY i.idnumber LIMIT ?";
 
-		vector<StudentInfo> student_info;
-
 		try {
 			m_mdl->setSchema("student");
 			SQLContainer sql_container(m_mdl.get(), sql);
 			sql_container << idnumber+"%" << limit;
 			auto_ptr<ResultSet> rs(sql_container.exeQuery());
 
-			student_info = vector<StudentInfo>(rs->rowsCount());
-			vector<StudentInfo>::iterator it = student_info.begin();
+			students = vector<Student>(rs->rowsCount());
+			vector<Student>::iterator it = students.begin();
 
 			Fpdata fpdata;
 			ZeroMemory(&fpdata, sizeof(Fpdata));
@@ -454,8 +445,35 @@ namespace mdldb{
 				it->set_fpdata(fpdata);
 				it++;
 			}
+		} catch(SQLException& e) {
+			throw MDLDB_Exception(e.what(), GENERAL_ERROR);
+		}
+	}
 
-			return student_info;
+	void Mdldb::get_course_groups(vector<Group>& groups)
+	{
+		if (!connected())
+			throw MDLDB_Exception("没有连接到数据库", DISCONNECTED);
+		if (!course_associated())
+			throw MDLDB_Exception("没有关联课程", NO_COURSE);
+
+		const char* sql = "SELECT id, name FROM mdl_groups WHERE courseid=?";
+
+		try {
+			m_mdl->setSchema("moodle");
+			SQLContainer sql_container(m_mdl.get(), sql);
+			sql_container << m_course.id;
+			auto_ptr<ResultSet> rs(sql_container.exeQuery());
+
+			groups = vector<Group>(rs->rowsCount());
+
+			vector<Group>::iterator it = groups.begin();
+
+			while (rs->next()) {
+				it->id = rs->getUInt("id");
+				it->name = rs->getString("name");
+				it++;
+			}
 		} catch(SQLException& e) {
 			throw MDLDB_Exception(e.what(), GENERAL_ERROR);
 		}

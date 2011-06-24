@@ -5,32 +5,19 @@ using namespace std;
 
 namespace mdldb
 {
-	StudentInfo::StudentInfo()
+	Student::Student(const string& idnumber, 
+					 Fpdata& fpdata)
 	{
-		m_idnumber = "";
-		m_fullname = "";
-		ZeroMemory(&m_fpdata, sizeof(Fpdata));
+		m_idnumber	   = idnumber;
+		memcpy(&m_fpdata, &fpdata, sizeof(Fpdata));
 	}
 
-	StudentInfo::StudentInfo(const string& idnumber, 
-							 const Fpdata& fpdata)
-	{
-		m_idnumber	= idnumber;
-		CopyMemory(&m_fpdata, &fpdata, sizeof(Fpdata));
-	}
-
-	StudentInfo::StudentInfo(const string& idnumber, 
-							 const string& fullname, 
-							 const Fpdata& fpdata)
+	Student::Student(const string& idnumber, 
+					 const string& fullname, 
+					 Fpdata& fpdata)
 	{
 		m_idnumber	= idnumber;
 		m_fullname	= fullname;
-		CopyMemory(&m_fpdata, &fpdata, sizeof(Fpdata));
-	}
-
-	StudentInfo::~StudentInfo()
-	{
-		if (m_fpdata.data != NULL)
-			delete m_fpdata.data;
+		memcpy(&m_fpdata, &fpdata, sizeof(Fpdata));
 	}
 }

@@ -12,17 +12,16 @@
 #pragma once
 
 #include "mdldb/Mdldb.h"
+#include "Config.h"
+
+using namespace mdldb;
 
 // CLoginDlg 对话框
 class CLoginDlg : public CDialog
 {
 // 构造
 public:
-	CLoginDlg(string dbhost,
-			  string dbport,
-			  string dbuser,
-			  string dbpasswd,
-			  string passwordsalt,
+	CLoginDlg(Config& cfg,
 			  CWnd* pParent = NULL);	// 标准构造函数
 
 // 对话框数据
@@ -36,7 +35,8 @@ public:
 protected:
 	HICON m_hIcon;
 
-	mdldb::Mdldb m_mdl;
+	Config m_cfg;
+	Mdldb m_mdl;
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();

@@ -139,9 +139,7 @@ void Config::create()
 	m_dbhost = "172.16.81.156";
 	m_dbport = "3306";
 	m_dbuser = "attendance";
-	m_buffer = "attendance";
-	encode_buffer();
-	m_dbpasswd = CStringToString(m_buffer);
+	m_dbpasswd = "attendance";
 	m_passwordsalt = "r+a~,qm_5(.M D]9[4-9T]u=JT/fu&z";
 }
 
@@ -150,6 +148,10 @@ void Config::save()
 	write_profile_string(L"database", L"dbhost", stringToCString(m_dbhost));
 	write_profile_string(L"database", L"dbport", stringToCString(m_dbport));
 	write_profile_string(L"database", L"dbuser", stringToCString(m_dbuser));
-	write_profile_string(L"database", L"dbpasswd", stringToCString(m_dbpasswd));
+
+	m_buffer = stringToCString(m_dbpasswd);
+	encode_buffer();
+	write_profile_string(L"database", L"dbpasswd", m_buffer);
+
 	write_profile_string(L"moodle", L"passwordsalt", stringToCString(m_passwordsalt));
 }

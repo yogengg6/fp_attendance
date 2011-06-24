@@ -15,7 +15,10 @@ public:
 	enum{BUFFER_SIZE = 100};
 
 	Config();
-	~Config(){;}
+	~Config()
+	{
+		save();
+	}
 
 	bool load();
 	void save();
@@ -36,7 +39,7 @@ protected:
 	void encode_buffer();
 	void decode_buffer();
 
-	inline byte hexchar_to_byte(char c) {
+	inline byte hexchar_to_byte(wchar_t c) {
 		return c < 'a'? c-'0': c-'a'+10;
 	}
 

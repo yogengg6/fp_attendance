@@ -29,10 +29,8 @@
 IMPLEMENT_DYNAMIC(CEntryDlg, CDialog)
 
 CEntryDlg::CEntryDlg(mdldb::Mdldb& mdl, CWnd* pParent /*=NULL*/)
-	:	CDialog(CEntryDlg::IDD, pParent), m_mdl(mdl),
-		m_nextButton(NULL),
-		m_courseComboBox(NULL),
-		m_sessionComboBox(NULL)
+	:	CDialog(CEntryDlg::IDD, pParent), 
+		m_mdl(mdl)
 {
 	DPFPInit();
 	if (FT_OK == FX_init()) {
@@ -53,6 +51,11 @@ CEntryDlg::~CEntryDlg()
 void CEntryDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_SESSION, m_sessionComboBox);
+	DDX_Control(pDX, IDC_COURSE, m_courseComboBox);
+	DDX_Control(pDX, IDC_ENTRY_STATIC_SESSION, m_sessionStatic);
+	DDX_Control(pDX, IDC_ENTRY_STATIC_COURSE, m_courseStatic);
+	DDX_Control(pDX, ID_NEXT, m_nextButton);
 }
 
 BOOL CEntryDlg::OnInitDialog()
@@ -62,14 +65,8 @@ BOOL CEntryDlg::OnInitDialog()
 	if (! m_mdl.connected())
 		return FALSE;
 
-	m_nextButton	  = (CButton *)	 GetDlgItem(ID_NEXT);
-	m_courseComboBox  = (CComboBox*) GetDlgItem(IDC_COURSE);
-	m_sessionComboBox = (CComboBox*) GetDlgItem(IDC_SESSION);
-	m_static_course	  = (CStatic *)	 GetDlgItem(IDC_ENTRY_STATIC_COURSE);
-	m_static_session  = (CStatic *)  GetDlgItem(IDC_ENTRY_STATIC_SESSION);
-
 	try {
-		m_courseInfo = m_mdl.get_authorized_course();
+		m_mdl.get_authorized_course(m_course);
 	} catch (mdldb::MDLDB_Exception& e) {
 		MessageBox(CString(e.what()), L"数据库连接");
 	}
@@ -77,8 +74,8 @@ BOOL CEntryDlg::OnInitDialog()
 	CheckRadioButton(IDC_ATTENDANT, IDC_ENTRY_FPMANAGE, IDC_ENTRY_FPMANAGE);
 	SetDlgItemText(IDC_COURSE, L"请选择课程");
 
-	for (unsigned int i = 0; i < m_courseInfo.size(); ++i)
-		m_courseComboBox->AddString(stringToCString(m_courseInfo[i].fullname));
+	for (unsigned int i = 0; i < m_course.size(); ++i)
+		m_courseComboBox.AddString(stringToCString(m_course[i].fullname));
 
 	return TRUE;
 
@@ -87,12 +84,11 @@ BOOL CEntryDlg::OnInitDialog()
 BEGIN_MESSAGE_MAP(CEntryDlg, CDialog)
 	ON_BN_CLICKED(ID_NEXT, &CEntryDlg::OnBnClickedNext)
 	ON_BN_CLICKED(ID_EXIT, &CEntryDlg::OnBnClickedExit)
+	ON_BN_CLICKED(IDC_ATTENDANT, &CEntryDlg::OnBnClickedAttendant)
+	ON_BN_CLICKED(IDC_ENTRY_FPMANAGE, &CEntryDlg::OnBnClickedEntryFpmanage)
 	ON_CBN_SELENDOK(IDC_COURSE, &CEntryDlg::OnCbnSelendokCourse)
 	ON_CBN_SELENDOK(IDC_SESSION, &CEntryDlg::OnCbnSelendokSession)
-	ON_BN_CLICKED(IDC_ATTENDANT, &CEntryDlg::OnBnClickedAttendant)
 	ON_CBN_SELCHANGE(IDC_COURSE, &CEntryDlg::OnCbnSelchangeCourse)
-	ON_CBN_SETFOCUS(IDC_SESSION, &CEntryDlg::OnCbnSetfocusSession)
-	ON_BN_CLICKED(IDC_ENTRY_FPMANAGE, &CEntryDlg::OnBnClickedEntryFpmanage)
 END_MESSAGE_MAP()
 
 
@@ -133,65 +129,60 @@ void CEntryDlg::OnBnClickedExit()
 
 void CEntryDlg::OnBnClickedEntryFpmanage()
 {
-	m_nextButton->EnableWindow(TRUE);
-	m_static_course->EnableWindow(FALSE);
-	m_static_session->EnableWindow(FALSE);
-	m_courseComboBox->EnableWindow(FALSE);
-	m_sessionComboBox->EnableWindow(FALSE);
+	m_nextButton.EnableWindow(TRUE);
+	m_courseStatic.EnableWindow(FALSE);
+	m_sessionStatic.EnableWindow(FALSE);
+	m_courseComboBox.EnableWindow(FALSE);
+	m_sessionComboBox.EnableWindow(FALSE);
 }
 
 void CEntryDlg::OnBnClickedAttendant()
 {
-	m_static_course->EnableWindow(TRUE);
-	m_courseComboBox->EnableWindow(TRUE);
+	m_courseStatic.EnableWindow(TRUE);
+	m_courseComboBox.EnableWindow(TRUE);
 	if (m_mdl.course_associated() && m_mdl.course_has_session()) {
-		m_static_session->EnableWindow(TRUE);
-		m_sessionComboBox->EnableWindow(TRUE);
+		m_sessionStatic.EnableWindow(TRUE);
+		m_sessionComboBox.EnableWindow(TRUE);
 	}
 	if (m_mdl.session_associated())
-		m_nextButton->EnableWindow(TRUE);
+		m_nextButton.EnableWindow(TRUE);
 	else
-		m_nextButton->EnableWindow(FALSE);
+		m_nextButton.EnableWindow(FALSE);
 }
 
 void CEntryDlg::OnCbnSelendokCourse()
 {
-	int index = m_courseComboBox->GetCurSel();
-	m_mdl.associate_course(m_courseInfo[index].id);
-	if (m_mdl.course_has_session()) {
-		m_static_session->EnableWindow(TRUE);
-		m_sessionComboBox->EnableWindow(TRUE);
+	int index = m_courseComboBox.GetCurSel();
+	m_sessionComboBox.Clear();
+	try {
+		m_mdl.associate_course(m_course[index].id);
+
+		m_mdl.get_session_discription(m_session);
+		if (m_mdl.course_has_session() && m_session.size() > 0) {
+			for (unsigned int i = 0; i < m_session.size(); ++i)
+				m_sessionComboBox.AddString(stringToCString(m_session[i]));
+			m_sessionStatic.EnableWindow(TRUE);
+			m_sessionComboBox.EnableWindow(TRUE);
+		}
+	} catch (mdldb::MDLDB_Exception& e) {
+		MessageBox(CString(e.what()), L"数据库连接");
 	}
 }
 
 void CEntryDlg::OnCbnSelendokSession()
 {
-	int index = m_sessionComboBox->GetCurSel();
+	int index = m_sessionComboBox.GetCurSel();
 	m_mdl.associate_session(m_session[index]);
-	m_nextButton->EnableWindow(TRUE);
+	m_nextButton.EnableWindow(TRUE);
 }
 
 void CEntryDlg::OnCbnSelchangeCourse()
 {
 	if (m_mdl.course_has_session()) {
-		m_static_session->EnableWindow(TRUE);
-		m_sessionComboBox->EnableWindow(TRUE);
+		m_sessionStatic.EnableWindow(TRUE);
+		m_sessionComboBox.EnableWindow(TRUE);
 	} else {
-		m_static_session->EnableWindow(FALSE);
-		m_sessionComboBox->EnableWindow(FALSE);
+		m_sessionStatic.EnableWindow(FALSE);
+		m_sessionComboBox.EnableWindow(FALSE);
 	}
-}
-
-void CEntryDlg::OnCbnSetfocusSession()
-{
-	m_sessionComboBox->Clear();
-
-	try {
-		m_session = m_mdl.get_session_discription(  );
-	} catch (mdldb::MDLDB_Exception& e) {
-		MessageBox(CString(e.what()), L"数据库连接");
-	}
-
-	for (unsigned int i = 0; i < m_session.size(); ++i)
-		m_sessionComboBox->AddString(stringToCString(m_session[i]));
 }

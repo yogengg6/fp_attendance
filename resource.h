@@ -42,14 +42,16 @@
 #define ID_BACK                         1023
 #define IDC_COURSE                      1024
 #define IDC_SESSION                     1025
+#define IDC_SESSION2                    1026
+#define IDC_GROUP                       1026
 #define IDC_ATTENDANT_IDNUMBER          1027
 #define IDC_ATTENDANT_FULLNAME          1028
-#define IDC_ATTENDANT_FULLNAME2         1029
 #define IDC_ATTENDANT_STATUS            1029
 #define IDC_USERNAME                    1035
 #define IDC_PASSWORD                    1036
 #define IDC_ENTRY_STATIC_SESSION        1038
 #define IDC_ENTRY_STATIC_COURSE         1039
+#define IDC_ENTRY_STATIC_GROUP          1040
 #define IDC_LIST_STUDENTINFO            1044
 #define IDC_IDNUMBER                    1045
 #define IDC_BUTTON1                     1046

@@ -52,7 +52,7 @@ protected:
 
 	//数据结构成员变量
 	mdldb::Mdldb				m_mdl;
-	vector<mdldb::StudentInfo>	m_student_info;
+	vector<mdldb::Student>	m_student_info;
 
 	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
@@ -67,6 +67,5 @@ protected:
 public:
 	afx_msg void OnBnClickedExit();
 	afx_msg void OnBnClickedBack();
-    afx_msg LRESULT OnFpNotify (WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnFpNotify (WPARAM wParam, LPARAM lParam);
 };
