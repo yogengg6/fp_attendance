@@ -78,7 +78,7 @@ BOOL CAttendanceDlg::OnInitDialog()
 	m_notify = (CListBox *) GetDlgItem(IDC_ATTENDANT_NOTIFY);
 
 	try {
-		m_mdl.get_course_student_info(m_student_info);
+		m_mdl.get_course_students(m_student_info);
 	} catch (mdldb::MDLDB_Exception& e) {
 		MessageBox(CString(e.what()), L"¿¼ÇÚ");
 	}
@@ -109,8 +109,6 @@ BEGIN_MESSAGE_MAP(CAttendanceDlg, CDialog)
 	ON_MESSAGE	 (FP_NOTIFY,	&CAttendanceDlg::OnFpNotify)
 	ON_BN_CLICKED(ID_EXIT,		&CAttendanceDlg::OnBnClickedExit)
 	ON_BN_CLICKED(ID_BACK,		&CAttendanceDlg::OnBnClickedBack)
-    OnFpNotify(WPARAM wParam, LPARAM lParam)
-	
 END_MESSAGE_MAP()
 
 
@@ -176,7 +174,7 @@ int CAttendanceDlg::MatchFeatures(DATA_BLOB* const fpImage)
 				Fpdata fpdata = m_student_info[i].get_fpdata();
 				rc = MC_verifyFeaturesEx(m_mcContext, 
 										 fpdata.size, 
-										 fpdata.data, 
+										 fpdata.data,
 										 iRecommendedVerFtrLen,
 									 	 fpTemplate,
 										 0,
@@ -191,10 +189,6 @@ int CAttendanceDlg::MatchFeatures(DATA_BLOB* const fpImage)
 							delete fpTemplate;
 							return i;
 						}
-				}
-				else {
-					delete fpTemplate;
-					return DEVICE_ERROR;
 				}
 			}
 			delete fpTemplate;

@@ -70,7 +70,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="mysqlcppconn.lib mysqlcppconn-static.lib DPFpUI.lib DPFPApi.lib dpHFtrEx.lib dpHMatch.lib cryptlib.lib"
-				LinkIncremental="0"
+				LinkIncremental="1"
 				AdditionalLibraryDirectories="D:\Dev\cryptopp561\Win32\Output\Debug;&quot;D:\software\DigitalPersona\One Touch SDK\C-C++\Lib\win32&quot;;&quot;D:\software\MySQL\MySQL Connector C++ 1.1.0\lib\opt&quot;"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"

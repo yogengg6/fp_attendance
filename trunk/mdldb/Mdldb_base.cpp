@@ -15,8 +15,6 @@
 #include <iostream>
 #include <sstream>
 
-#include <boost/any.hpp>
-
 #include <mysql_driver.h>
 #include <mysql_connection.h>
 #include <cppconn/sqlstring.h>

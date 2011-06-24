@@ -109,9 +109,11 @@ namespace mdldb{
 			m_dbhost = "tcp://" + dbhost + ":" + dbport;
 		}
 
-		inline void set_dbuser(string dbuser) {m_dbuser = dbuser;}
-
-		inline void set_dbpasswd(string dbpasswd) {m_dbpasswd = dbpasswd;}
+		inline void set_dbaccount(string dbuser, string dbpasswd)
+		{
+			m_dbuser = dbuser;
+			m_dbpasswd = dbpasswd;
+		}
 
 		//连接数据库
 		bool		connect() throw(MDLDB_Exception);

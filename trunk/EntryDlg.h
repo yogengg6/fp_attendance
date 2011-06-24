@@ -8,12 +8,13 @@
  */
 #pragma once
 
-using namespace std;
-
 #include <vector>
 
 #include "afxwin.h"
 #include "mdldb/Mdldb.h"
+
+using namespace std;
+using namespace mdldb;
 
 // CEntryDlg ¶Ô»°¿ò
 
@@ -22,7 +23,7 @@ class CEntryDlg : public CDialog
 	DECLARE_DYNAMIC(CEntryDlg)
 
 public:
-	CEntryDlg(mdldb::Mdldb &mdl, CWnd* pParent = NULL);
+	CEntryDlg(Mdldb &mdl, CWnd* pParent = NULL);
 	virtual ~CEntryDlg();
 
 	enum { IDD = IDD_ENTRY };
@@ -32,20 +33,13 @@ protected:
 
 	virtual void DoDataExchange(CDataExchange* pDX);
 
-	vector<mdldb::CourseInfo>	m_courseInfo;
-	vector<string>				m_session;
-
-	CButton   *					m_nextButton;
-	CStatic	  *					m_static_course;
-	CStatic   *					m_static_session;
-	CComboBox *					m_courseComboBox;
-	CComboBox *					m_sessionComboBox;
-
 private:
-	mdldb::Mdldb m_mdl;
+	Mdldb			m_mdl;
+	vector<Course>	m_course;
+	vector<Group>	m_gourps;
+	vector<string>	m_session;
 
 	DECLARE_MESSAGE_MAP()
-public:
 	afx_msg void OnCbnSelendokCourse();
 	afx_msg void OnCbnSelendokSession();
 	afx_msg void OnBnClickedNext();
@@ -54,4 +48,9 @@ public:
 	afx_msg void OnCbnSelchangeCourse();
 	afx_msg void OnCbnSetfocusSession();
 	afx_msg void OnBnClickedEntryFpmanage();
+	CComboBox m_sessionComboBox;
+	CComboBox m_courseComboBox;
+	CStatic m_sessionStatic;
+	CStatic m_courseStatic;
+	CButton m_nextButton;
 };

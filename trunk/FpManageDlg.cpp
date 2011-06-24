@@ -47,10 +47,11 @@ BOOL CFpManageDlg::OnInitDialog()
 
 	m_editIdnumber.SetLimitText(7);
 
-	vector<StudentInfo> student_info = m_mdl.get_student_info("", 20);
+	vector<Student> students;
+	m_mdl.get_students(students, "", 22);
 
-	int row = 0, col = 0;
-	vector<StudentInfo>::iterator it = student_info.begin();
+	int row = -1, col = 0;
+	vector<Student>::iterator it = students.begin();
 
 	CString str;
 	CString prev_idnumber = L"";
@@ -61,21 +62,26 @@ BOOL CFpManageDlg::OnInitDialog()
 		Fpdata fpdata = it->get_fpdata();
 
 		if (idnumber == prev_idnumber) {
-			m_listColumns++;
-			str.Format(L"Ö¸ÎÆ%d", m_listColumns-2);
-			m_studentInfoList.InsertColumn(m_listColumns, str, LVCFMT_LEFT, 80);
+			if (col+1 > m_listColumns){
+				m_listColumns++;
+				str.Format(L"Ö¸ÎÆ%d", m_listColumns-2);
+				m_studentInfoList.InsertColumn(m_listColumns, str, LVCFMT_LEFT, 80);
+			}
 			str.LoadString(IDS_FINGER_INDEX + fpdata.index);
 			m_studentInfoList.SetItemText(row, col++, str);
-		} else {
+		} else if (row < 10) {
 			col = 0;
+			row++;
 			m_studentInfoList.InsertItem(row, L"");
 			m_studentInfoList.SetItemText(row, col++, idnumber);
 			m_studentInfoList.SetItemText(row, col++, fullname);
-			str.LoadString(IDS_FINGER_INDEX + fpdata.index);
-			m_studentInfoList.SetItemText(row, col++, str);
-			row++;
-		}
-	} while (++it != student_info.end());
+			prev_idnumber = idnumber;
+			if (fpdata.index > 0) {
+				str.LoadString(IDS_FINGER_INDEX + fpdata.index);
+				m_studentInfoList.SetItemText(row, col++, str);
+			}
+		} else break;
+	} while (++it != students.end());
 	return TRUE;
 }
 
@@ -127,16 +133,16 @@ void CFpManageDlg::OnEnChangeIdnumber()
 
 	m_studentInfoList.DeleteAllItems();
 
-	vector<StudentInfo> student_info = 
-		m_mdl.get_student_info(CStringToString(idnumber), 20);
+	vector<Student> students;
+	m_mdl.get_students(students, CStringToString(idnumber), 22);
 
-	if (student_info.size() == 0)
+	if (students.size() == 0)
 		return;
 
 	int row = -1, col = 0;
 	CString str;
 	CString prev_idnumber = L"";
-	vector<StudentInfo>::iterator it = student_info.begin();
+	vector<Student>::iterator it = students.begin();
 
 	do {
 		CString idnumber = stringToCString(it->get_idnumber());
@@ -144,24 +150,26 @@ void CFpManageDlg::OnEnChangeIdnumber()
 		Fpdata fpdata = it->get_fpdata();
 
 		if (idnumber == prev_idnumber) {
-			str.LoadString(IDS_FINGER_INDEX + fpdata.index);
-			m_studentInfoList.SetItemText(row, col++, str);
-			if (col > m_listColumns){
+			if (col+1 > m_listColumns){
 				m_listColumns++;
 				str.Format(L"Ö¸ÎÆ%d", m_listColumns-2);
 				m_studentInfoList.InsertColumn(m_listColumns, str, LVCFMT_LEFT, 80);
 			}
-		} else {
+			str.LoadString(IDS_FINGER_INDEX + fpdata.index);
+			m_studentInfoList.SetItemText(row, col++, str);
+		} else if (row < 10) {
 			col = 0;
 			row++;
 			m_studentInfoList.InsertItem(row, L"");
 			m_studentInfoList.SetItemText(row, col++, idnumber);
 			m_studentInfoList.SetItemText(row, col++, fullname);
-			str.LoadString(IDS_FINGER_INDEX + fpdata.index);
-			m_studentInfoList.SetItemText(row, col++, str);
 			prev_idnumber = idnumber;
-		}
-	} while (++it != student_info.end());
+			if (fpdata.index > 0) {
+				str.LoadString(IDS_FINGER_INDEX + fpdata.index);
+				m_studentInfoList.SetItemText(row, col++, str);
+			}
+		} else break;
+	} while (++it != students.end());
 }
 
 static DATA_BLOB fpTemplate[11] = {0};
@@ -193,26 +201,30 @@ void CFpManageDlg::OnBnClickedFpAddModify()
 	unsigned long fpMask = 0;
 	HWND hWnd = this->GetSafeHwnd();
 	POSITION pos = m_studentInfoList.GetFirstSelectedItemPosition();
-	int id = (int) m_studentInfoList.GetNextSelectedItem(pos);
-	string idnumber = CStringToString(m_studentInfoList.GetItemText(id, 0));
-	DPEnrollUI(hWnd, 2, &fpMask, (DPENROLLMENTPROC)EnrollmentProc, NULL);
-	if (fpMask > 0) {
-		m_mdl.fpdelete(idnumber);
-		for (int i = 1; i <= 10; ++i) {
-			if (fpTemplate[i].cbData != 0) {
-				Fpdata fpdata = {i, fpTemplate[i].cbData, fpTemplate[i].pbData};
-				m_mdl.fpenroll(StudentInfo(idnumber, fpdata));
+	if (pos != 0) {
+		int id = (int) m_studentInfoList.GetNextSelectedItem(pos);
+		string idnumber = CStringToString(m_studentInfoList.GetItemText(id, 0));
+		DPEnrollUI(hWnd, 2, &fpMask, (DPENROLLMENTPROC)EnrollmentProc, NULL);
+		if (fpMask > 0) {
+			m_mdl.fpdelete(idnumber);
+			for (int i = 1; i <= 10; ++i) {
+				if (fpTemplate[i].cbData != 0) {
+					Fpdata fpdata = {i, fpTemplate[i].cbData, fpTemplate[i].pbData};
+					m_mdl.fpenroll(Student(idnumber, fpdata));
+				}
 			}
 		}
+		OnEnChangeIdnumber();
 	}
-	OnEnChangeIdnumber();
 }
 
 void CFpManageDlg::OnBnClickedFpDelete()
 {
 	POSITION pos = m_studentInfoList.GetFirstSelectedItemPosition();
-	int id = (int) m_studentInfoList.GetNextSelectedItem(pos);
-	CString idnumber = m_studentInfoList.GetItemText(id, 0);
-	m_mdl.fpdelete(CStringToString(idnumber));
-	OnEnChangeIdnumber();
+	if (pos != 0) {
+		int id = (int) m_studentInfoList.GetNextSelectedItem(pos);
+		CString idnumber = m_studentInfoList.GetItemText(id, 0);
+		m_mdl.fpdelete(CStringToString(idnumber));
+		OnEnChangeIdnumber();
+	}
 }

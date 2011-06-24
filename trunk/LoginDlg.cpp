@@ -60,14 +60,11 @@ END_MESSAGE_MAP()
 
 
 
-CLoginDlg::CLoginDlg(string dbhost,
-					 string dbport,
-					 string dbuser,
-					 string dbpasswd,
-					 string passwordsalt,
+CLoginDlg::CLoginDlg(Config& cfg,
 					 CWnd* pParent /*=NULL*/)
 	: CDialog(CLoginDlg::IDD, pParent),
-	m_mdl(dbhost, dbport, dbuser, dbpasswd, passwordsalt)
+	m_cfg(cfg),
+	m_mdl(cfg.m_dbhost, cfg.m_dbport, cfg.m_dbuser, cfg.m_dbpasswd, cfg.m_passwordsalt)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -195,7 +192,7 @@ void CLoginDlg::OnBnClickedConnect()
             MessageBox(L"不能连接到数据库，请检查网络环境。", L"数据库连接");
             break;
         case mdldb::CONNECTION_REFUSED:
-            MessageBox(L"连接被拒绝，请检查用户名和密码。", L"数据库连接");
+            MessageBox(L"连接被拒绝，请检查数据库用户名和密码。", L"数据库连接");
             break;
 		case mdldb::NO_USER:
 			MessageBox(L"没有这个用户。", L"登录");
@@ -223,8 +220,10 @@ void CLoginDlg::OnBnClickedExit()
 void CLoginDlg::On32772()
 {
 	CDialog* dlg = new CDialog();
-	CDbconfig dbConfigDlg(m_mdl);
-	dbConfigDlg.DoModal();
+	CConfigDlg CConfigDlg(m_cfg);
+	CConfigDlg.DoModal();
+	m_mdl.set_dbhost(m_cfg.m_dbhost, m_cfg.m_dbport);
+	m_mdl.set_dbaccount(m_cfg.m_dbuser, m_cfg.m_dbpasswd);
 }
 
 void CLoginDlg::OnClickAbout()

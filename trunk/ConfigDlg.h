@@ -1,18 +1,17 @@
 #pragma once
 
 #include "ultility.h"
-#include "mdldb/Mdldb.h"
 #include "Config.h"
 
 // CDbconfig 对话框
 
-class CDbconfig : public CDialog
+class CConfigDlg : public CDialog
 {
-	DECLARE_DYNAMIC(CDbconfig)
+	DECLARE_DYNAMIC(CConfigDlg)
 
 public:
-	CDbconfig(mdldb::Mdldb& mdl, CWnd* pParent = NULL);   // 标准构造函数
-	virtual ~CDbconfig();
+	CConfigDlg(Config& cfg, CWnd* pParent = NULL);   // 标准构造函数
+	virtual ~CConfigDlg();
 
 // 对话框数据
 	enum { IDD = IDD_DATABASE_CONFIG };
@@ -21,8 +20,7 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();
 
-	mdldb::Mdldb m_mdl;
-	Config cfg;
+	Config m_cfg;
 
 	DECLARE_MESSAGE_MAP()
 public:
