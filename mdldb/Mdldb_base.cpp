@@ -33,7 +33,7 @@ namespace mdldb
 	string								Mdldb_base::m_dbuser = "";
 	string								Mdldb_base::m_dbpasswd = "";
 
-	auto_ptr<Connection>			Mdldb_base::m_mdl(NULL);
+	auto_ptr<Connection>			Mdldb_base::m_mdlconn(NULL);
 	auto_ptr<mysql::MySQL_Driver>	Mdldb_base::m_driver(NULL);
 
 	/**
@@ -63,9 +63,9 @@ namespace mdldb
 	bool Mdldb_base::connect() throw(MDLDB_Exception)
 	{
 		try {
-			m_mdl = auto_ptr<Connection>(m_driver->connect(m_dbhost, m_dbuser, m_dbpasswd));
-			m_mdl->setSchema("moodle");
-			m_mdl->setClientOption("OPT_SET_CHARSET_NAME", "utf8");
+			m_mdlconn = auto_ptr<Connection>(m_driver->connect(m_dbhost, m_dbuser, m_dbpasswd));
+			m_mdlconn->setSchema("moodle");
+			m_mdlconn->setClientOption("OPT_SET_CHARSET_NAME", "utf8");
 		} catch (SQLException &e) {
 			switch (e.getErrorCode()) {
 			case 1045:
@@ -81,6 +81,6 @@ namespace mdldb
 				break;
 			}
 		}
-		return m_mdl.get() != NULL;
+		return m_mdlconn.get() != NULL;
 	}
 }

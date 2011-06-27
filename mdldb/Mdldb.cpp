@@ -36,7 +36,26 @@ namespace mdldb{
 	{
 	}
 
-	void Mdldb::auth(string username, string password)
+	bool Mdldb::auth_user_exists(string username)
+	{
+		m_mdlconn->setSchema("moodle");
+
+		//验证用户是否存在（不存在则抛出异常）
+		const char* sql_getuserid = 
+			"SELECT id FROM mdl_user WHERE username=?";
+		SQLContainer sql_container(m_mdlconn.get(), sql_getuserid);
+		sql_container << username;
+		auto_ptr<ResultSet> rs(sql_container.exeQuery());
+		if (rs->rowsCount() == 1) {
+			rs->next();
+			m_userid = rs->getUInt("id");
+			m_sess.lasttakenby = m_userid;
+			return true;
+		} else
+			return false;
+	}
+
+	bool Mdldb::auth_check_passwd(uint id, string password)
 	{
 		static char md5passwd[32] = {0};
 		static byte md5result[32] = {0};
@@ -50,41 +69,97 @@ namespace mdldb{
 		for (int i = 0; i < 16; i++)
 			sprintf(md5passwd + i*2, "%02x", md5result[i]);
 
+		//验证用户密码
+		m_mdlconn->setSchema("moodle");
+
+		const char* sql_auth_password = 
+			"SELECT id FROM mdl_user WHERE id=? AND password=?";
+		SQLContainer sql_container(m_mdlconn.get(), sql_auth_password);
+		sql_container << id << md5passwd;
+		auto_ptr<ResultSet> rs(sql_container.exeQuery());
+		if (rs->rowsCount() == 1)
+			return true;
+		else
+			return false;
+	}
+
+	bool Mdldb::auth_check_permission(uint id)
+	{
+		m_mdlconn->setSchema("moodle");
+		//检查用户权限
+		const char* sql_auth_permission = 
+			"SELECT id FROM mdl_role_assignments WHERE userid=? AND roleid<5";
+		SQLContainer sql_container(m_mdlconn.get(), sql_auth_permission);
+		sql_container << id;
+		auto_ptr<ResultSet> rs(sql_container.exeQuery());
+		if (rs->rowsCount() < 1)
+			return false;
+		else
+			return true;
+			
+	}
+
+	void Mdldb::auth(string username, string password)
+	{
 		try {
-			m_mdl->setSchema("moodle");
-
-			//验证用户是否存在（不存在则抛出异常）
-			const char* sql_getuserid = 
-				"SELECT id FROM mdl_user WHERE username=?";
-			SQLContainer sql_container(m_mdl.get(), sql_getuserid);
-			sql_container << username;
-			auto_ptr<ResultSet> rs(sql_container.exeQuery());
-			if (rs->rowsCount() != 1)
+			if (auth_user_exists(username) == true) {
+				if (auth_check_passwd(m_userid, password) == true) {
+					if (auth_check_permission(m_userid) == true)
+						return;
+					else
+						throw MDLDB_Exception("no permission", NO_PERMISSION);
+				} else
+					throw MDLDB_Exception("incorrect password", INCORRECT_PASSWD);
+			} else
 				throw MDLDB_Exception("no such user", NO_USER);
-			rs->next();
-			m_userid = rs->getUInt("id");
-			m_sess.lasttakenby = m_userid;
-
-			//验证用户密码
-			const char* sql_auth_password = 
-				"SELECT id FROM mdl_user WHERE id=? AND password=?";
-			sql_container = SQLContainer(m_mdl.get(), sql_auth_password);
-			sql_container << m_userid << md5passwd;
-			rs = auto_ptr<ResultSet>(sql_container.exeQuery());
-			if (rs->rowsCount() != 1)
-				throw MDLDB_Exception("incorrect password", INCORRECT_PASSWD);
-
-			//检查用户权限
-			const char* sql_auth_permission = 
-				"SELECT id FROM mdl_role_assignments WHERE userid=? AND roleid<5";
-			sql_container = SQLContainer(m_mdl.get(), sql_auth_permission);
-			sql_container << m_userid;
-			rs = auto_ptr<ResultSet>(sql_container.exeQuery());
-			if (rs->rowsCount() < 1)
-				throw MDLDB_Exception("no permission", NO_PERMISSION);
 		} catch (SQLException& e) {
 			throw MDLDB_Exception(e.what(), GENERAL_ERROR);
 		}
+	}
+
+	bool Mdldb::get_statusset()
+	{
+		m_mdlconn->setSchema("moodle");
+
+		/**
+		* 根据课程id查询attendance插件的状态集。
+		* 如果记录数目不为4，说明这个课程没有创建attendance插件的实例
+		* 或者记录出现紊乱或故障。
+		* 如果成功，则设置课程是否有attendance插件为真。
+		*/
+		const char* prep_sql = 
+			"SELECT id FROM mdl_attendance_statuses WHERE courseid=?";
+		SQLContainer sql_container(m_mdlconn.get(), prep_sql);
+		sql_container << m_course.id;
+		auto_ptr<ResultSet> rs(sql_container.exeQuery());
+
+		if (rs->rowsCount() == 4) {
+			int i = 0;
+			while (rs->next())
+				m_sess.statuses[i++] = rs->getUInt("id");
+			return (m_course.has_attendance = true);
+		} else {
+			return (m_course.has_attendance = false);
+		}
+	}
+
+	void Mdldb::get_ordered_statusset()
+	{
+		m_mdlconn->setSchema("moodle");
+
+		const char* sql_statues_ordered = 
+			"SELECT id FROM mdl_attendance_statuses WHERE courseid=? \
+			ORDER BY grade DESC";
+
+		SQLContainer sql_container(m_mdlconn.get(), sql_statues_ordered);
+		sql_container << m_course.id;
+		auto_ptr<ResultSet> rs(sql_container.exeQuery());
+
+		ostringstream sout;
+		while (rs->next())
+			sout << rs->getUInt("id") << ",";
+		m_sess.statuesset = sout.str();
+		m_sess.statuesset.erase(m_sess.statuesset.end()-1);
 	}
 
 	void Mdldb::associate_course(uint id)
@@ -95,37 +170,10 @@ namespace mdldb{
 		m_course.id = id;
 
 		try {
-			int i = 0;
-
-			m_mdl->setSchema("moodle");
-
-			const char* prep_sql = 
-				"SELECT id FROM mdl_attendance_statuses WHERE courseid=?";
-			SQLContainer sql_container(m_mdl.get(), prep_sql);
-			sql_container << id;
-			auto_ptr<ResultSet> rs(sql_container.exeQuery());
-			if (rs->rowsCount() != 4) {
-				m_course.has_session = false;
-				return;
-			}
+			if (get_statusset() == true)
+				get_ordered_statusset();
 			else
-				m_course.has_session = true;
-			while (rs->next())
-				m_sess.statuses[i++] = rs->getUInt("id");
-
-			const char* sql_statues_ordered = 
-				"SELECT id FROM mdl_attendance_statuses WHERE courseid=? \
-					ORDER BY grade DESC";
-
-			sql_container = SQLContainer(m_mdl.get(), sql_statues_ordered);
-			sql_container << id;
-			rs = auto_ptr<ResultSet>(sql_container.exeQuery());
-
-			ostringstream sout;
-			while (rs->next())
-				sout << rs->getUInt("id") << ",";
-			m_sess.statuesset = sout.str();
-			m_sess.statuesset.erase(m_sess.statuesset.end()-1);
+				return;
 
 		} catch (SQLException &e) {
 			throw MDLDB_Exception(e.what(), GENERAL_ERROR);
@@ -144,9 +192,9 @@ namespace mdldb{
 				)";
 
 		try {
-			m_mdl->setSchema("moodle");
+			m_mdlconn->setSchema("moodle");
 
-			SQLContainer sql_container(m_mdl.get(), sql);
+			SQLContainer sql_container(m_mdlconn.get(), sql);
 			sql_container << m_userid;
 			auto_ptr<ResultSet> rs(sql_container.exeQuery());
 
@@ -176,14 +224,14 @@ namespace mdldb{
 
 		uint32_t now = (uint32_t)time(NULL);
 		
-		const char* prep_sql = 
+		const char* sql_session = 
 			"SELECT id, sessdate, duration FROM mdl_attendance_sessions \
 				WHERE courseid=? AND description=? \
 				AND ? BETWEEN sessdate AND sessdate + duration";
 		try {
-			m_mdl->setSchema("moodle");
+			m_mdlconn->setSchema("moodle");
 
-			SQLContainer sql_container(m_mdl.get(), prep_sql);
+			SQLContainer sql_container(m_mdlconn.get(), sql_session);
 			sql_container << m_course.id << session << now;
 
 			auto_ptr<ResultSet> rs(sql_container.exeQuery());
@@ -224,8 +272,8 @@ namespace mdldb{
 				AND ? BETWEEN sessdate AND sessdate + duration";
 
 		try {
-			m_mdl->setSchema("moodle");
-			SQLContainer sql_container(m_mdl.get(), sql);
+			m_mdlconn->setSchema("moodle");
+			SQLContainer sql_container(m_mdlconn.get(), sql);
 			sql_container << course_id << now;
 			auto_ptr<ResultSet> rs(sql_container.exeQuery());
 
@@ -247,8 +295,8 @@ namespace mdldb{
 					VALUES ((SELECT id FROM info WHERE idnumber=?), ?, ?, ?)";
 
 		try {
-			m_mdl->setSchema("student");
-			SQLContainer sql_container(m_mdl.get(), sql);
+			m_mdlconn->setSchema("student");
+			SQLContainer sql_container(m_mdlconn.get(), sql);
 			Fpdata fpdata = stu_info.get_fpdata();
 			string buffer((char*)fpdata.data, fpdata.size);
 			istringstream str_stream(buffer);
@@ -269,8 +317,8 @@ namespace mdldb{
 					 WHERE infoid IN (SELECT id FROM info WHERE idnumber=?)";
 
 		try {
-			m_mdl->setSchema("student");
-			SQLContainer sql_container(m_mdl.get(), sql);
+			m_mdlconn->setSchema("student");
+			SQLContainer sql_container(m_mdlconn.get(), sql);
 			sql_container << idnumber;
 			sql_container.execute();
 		} catch(SQLException& e) {
@@ -278,7 +326,52 @@ namespace mdldb{
 		}
 	}
 
-	bool Mdldb::attendant(string idnumber)
+	int Mdldb::get_userid(string idnumber)
+	{
+		m_mdlconn->setSchema("moodle");
+		const char* sql_get_studentid = "SELECT id FROM mdl_user WHERE idnumber=?";
+		SQLContainer sql_container(m_mdlconn.get(), sql_get_studentid);
+		sql_container << idnumber;
+		auto_ptr<ResultSet> rs(sql_container.exeQuery());
+		if (rs->rowsCount() == 1) {
+			rs->next();
+			return rs->getUInt("id");
+		} else
+			return -1;
+	}
+
+	bool Mdldb::attendant_update(uint status, uint studentid)
+	{
+		//如果数据库存在考勤记录，更新之
+		m_mdlconn->setSchema("moodle");
+		int rows_affected;
+		const char* sql_update = 
+			"UPDATE mdl_attendance_log SET statusid=? \
+			WHERE sessionid=? AND studentid=?";
+		SQLContainer sql_container(m_mdlconn.get(), sql_update);
+		sql_container << status << m_sess.id << studentid;
+		if ((rows_affected = sql_container.exeUpdate()) >= 1)
+			return true;
+		else
+			return false;
+	}
+
+	void Mdldb::attendant_insert(uint status, uint studentid)
+	{
+		uint now = time(NULL);
+		m_mdlconn->setSchema("moodle");
+		const char* sql_insert = 
+			"INSERT INTO mdl_attendance_log \
+			(sessionid, studentid, statusid, statusset, timetaken, takenby, remarks) \
+			VALUES(?, ?, ?, ?, ?, ?, ?)";
+
+		SQLContainer sql_container(m_mdlconn.get(), sql_insert);
+		sql_container << m_sess.id << studentid << status 
+			<< m_sess.statuesset << now << m_userid << "";
+		sql_container.execute();
+	}
+
+	void Mdldb::attendant(string idnumber)
 	{
 		if (!connected())
 			throw MDLDB_Exception("没有连接到数据库", DISCONNECTED);
@@ -287,21 +380,13 @@ namespace mdldb{
 		if (!session_associated())
 			throw MDLDB_Exception("没有关联会话", NO_SESSION);
 
-		uint32_t now = time(NULL);
-
-		uint32_t status;
-		int studentid, rows_affected;
+		int studentid;
+		uint status, now = time(NULL);
 
 		try {
-			m_mdl->setSchema("moodle");
-			const char* sql_get_studentid = "SELECT id FROM mdl_user WHERE idnumber=?";
-			SQLContainer sql_container(m_mdl.get(), sql_get_studentid);
-			sql_container << idnumber;
-			auto_ptr<ResultSet> rs(sql_container.exeQuery());
-			if (rs->rowsCount() != 1)
+			
+			if ((studentid = get_userid(idnumber)) == -1)
 				throw MDLDB_Exception("内部错误：不合法的学号", GENERAL_ERROR);
-			rs->next();
-			studentid = rs->getUInt("id");
 
 			if (now <= m_sess.sessdate)
 				status = m_sess.statuses[ATTEND];
@@ -310,33 +395,30 @@ namespace mdldb{
 			else
 				status = m_sess.statuses[ABSENT];
 
-			//如果数据库存在考勤记录，更新之
-			const char* sql_update = 
-				"UPDATE mdl_attendance_log SET statusid=? \
-				 WHERE sessionid=? AND studentid=?";
-			sql_container = SQLContainer(m_mdl.get(), sql_update);
-			sql_container << status << m_sess.id << studentid;
-			if ((rows_affected = sql_container.exeUpdate()) >= 1)
-				return true;
-			else if (rows_affected != 0)
-				throw MDLDB_Exception("内部错误", GENERAL_ERROR);
-
-			//数据库不存在相应考勤记录，插入一条记录
-			const char* sql_insert = 
-				"INSERT INTO mdl_attendance_log \
-				(sessionid, studentid, statusid, statusset, timetaken, takenby, remarks) \
-				VALUES(?, ?, ?, ?, ?, ?, ?)";
-
-			sql_container = SQLContainer(m_mdl.get(), sql_insert);
-			sql_container << m_sess.id << studentid << status 
-				<< m_sess.statuesset << now << m_userid << "";
-			sql_container.execute();
-
-			return true;
+			if (attendant_update(status, studentid) == true)
+				return;
+			else { 
+				//数据库不存在相应考勤记录，插入一条记录
+				attendant_insert(status, studentid);
+			}
 		} catch(SQLException& e) {
 			throw MDLDB_Exception(e.what(), GENERAL_ERROR);
 		}
-		
+	}
+
+	int Mdldb::get_contextid(uint instanceid, uint contextlevel)
+	{
+		m_mdlconn->setSchema("moodle");
+		const char* sql_context = 
+			"SELECT id FROM mdl_context WHERE instanceid=? AND contextlevel=?";
+		SQLContainer sql_container(m_mdlconn.get(), sql_context);
+		sql_container << instanceid << contextlevel;
+		auto_ptr<ResultSet> rs(sql_container.exeQuery());
+		if (rs->rowsCount() == 1) {
+			rs->next();
+			return rs->getUInt("id");
+		} else
+			return -1;
 	}
 
 	/**
@@ -355,19 +437,14 @@ namespace mdldb{
 			 * contextlevel = 50意味着选择的是课程的实例
 			 * moodle中如此定义：define('CONTEXT_COURSE', 50);
 			 */
-			m_mdl->setSchema("moodle");
-			const char* sql_context = 
-				"SELECT id FROM mdl_context WHERE instanceid=? AND contextlevel=50";
-			SQLContainer sql_container(m_mdl.get(), sql_context);
-			sql_container << m_course.id;
-			auto_ptr<ResultSet> rs(sql_container.exeQuery());
-			if (rs->rowsCount() != 1)
+			
+			int contextid;
+
+			if ((contextid = get_course_contextid(m_course.id, 50)) == -1)
 				throw MDLDB_Exception("会话不唯一", GENERAL_ERROR);
-			rs->next();
-			uint32_t contextid = rs->getUInt("id");
 
 			//获取选修moodle课程的所有学生
-			m_mdl->setSchema("student");
+			m_mdlconn->setSchema("student");
 			const char* sql = "SELECT idnumber, fullname, fp_index, fp_size, fp_data\
 							   FROM info AS i LEFT JOIN fingerprint AS fp \
 							   ON i.id=fp.infoid WHERE idnumber IN \
@@ -376,9 +453,9 @@ namespace mdldb{
 							    	 WHERE ra.contextid=? AND ra.roleid=5 AND u.id=ra.userid) \
 							   ORDER BY idnumber";
 
-			sql_container = SQLContainer(m_mdl.get(), sql);
+			SQLContainer sql_container(m_mdlconn.get(), sql);
 			sql_container << contextid;
-			rs = auto_ptr<ResultSet>(sql_container.exeQuery());
+			auto_ptr<ResultSet> rs(sql_container.exeQuery());
 
 			if (rs->rowsCount() > 0) {
 				students = vector<Student>(rs->rowsCount());
@@ -426,8 +503,8 @@ namespace mdldb{
 			ORDER BY i.idnumber LIMIT ?";
 
 		try {
-			m_mdl->setSchema("student");
-			SQLContainer sql_container(m_mdl.get(), sql);
+			m_mdlconn->setSchema("student");
+			SQLContainer sql_container(m_mdlconn.get(), sql);
 			sql_container << idnumber+"%" << limit;
 			auto_ptr<ResultSet> rs(sql_container.exeQuery());
 
@@ -460,8 +537,8 @@ namespace mdldb{
 		const char* sql = "SELECT id, name FROM mdl_groups WHERE courseid=?";
 
 		try {
-			m_mdl->setSchema("moodle");
-			SQLContainer sql_container(m_mdl.get(), sql);
+			m_mdlconn->setSchema("moodle");
+			SQLContainer sql_container(m_mdlconn.get(), sql);
 			sql_container << m_course.id;
 			auto_ptr<ResultSet> rs(sql_container.exeQuery());
 
