@@ -14,8 +14,8 @@ namespace mdldb{
 	typedef struct {
 		uint id;
 		string fullname;
-		//课程是否建立了会话
-		bool   has_session;
+		//课程是否建立了attendance插件实例
+		bool   has_attendance;
 	} Course;
 
 	typedef struct {
@@ -62,8 +62,8 @@ namespace mdldb{
 		//关联课程并获取相应的状态集m_statuses
 		void		associate_course(uint32_t id);
 
-		//判断课程是否存在会话
-		inline bool course_has_session() const {return m_course.has_session;}
+		//判断课程是否存在attendance插件实例
+		inline bool course_has_attendance() const {return m_course.has_attendance;}
 
 		//判断已关联课程
 		inline bool course_associated()  const {return m_course.id > 0;}
@@ -72,7 +72,7 @@ namespace mdldb{
 		 * 获取所有授权课程信息
 		 * 只有课程的直接负责人（教师、助理教师）才拥有考勤权限
 		 */
-		void get_authorized_course(vector<Course>& courses);
+		void		get_authorized_course(vector<Course>& courses);
 
 		//根据时间关联相应的会话
 		bool		associate_session(const string session_name) 
@@ -82,7 +82,7 @@ namespace mdldb{
 		inline bool session_associated() const {return m_sess.id > 0;}
 
 		//根据时间获取可能的会话的描述
-		void get_session_discription(vector<string>& sessions, uint32_t course_id = 0);
+		void		get_session_discription(vector<string>& sessions, uint32_t course_id = 0);
 
 		//根据学号注册或修改指纹信息
 		bool		fpenroll(Student& stu_info);
@@ -91,33 +91,39 @@ namespace mdldb{
 		void        fpdelete(string idnumber);
 
 		//根据学号判断出勤状态
-		bool		attendant(string idnumber);
+		void		attendant(string idnumber);
 
 
 		// 获取课程的小组
-		void get_course_groups(vector<Group>& groups);
+		void		get_course_groups(vector<Group>& groups);
 
 		// 当本地不存在需要用到的指纹数据时才应当使用本函数
-		void get_course_students(vector<Student>& students);
-
-
-		/**
-		* 获取的字符可能会是乱码（字节码）,因此可能需要使用
-		* MultiByteToWideChar()来转换。
-		*/
+		void		get_course_students(vector<Student>& students);
 
 		//获取部分学生信息
-		void get_students(vector<Student>& students, const string& idnumber, size_t limit)
+		void		get_students(vector<Student>& students, const string& idnumber, size_t limit)
 			throw(mdldb::MDLDB_Exception);
 			
+	private:
+		bool		auth_user_exists(string username);
+		bool		auth_check_passwd(uint id, string password);
+		bool		auth_check_permission(uint id);
 
-	protected:
+		bool		get_statusset();
+		void		get_ordered_statusset();
+
+		int			get_userid(string idnumber);
+
+		void		attendant_insert(uint status, uint studentid);
+		bool		attendant_update(uint status, uint studentid);
+
+		int			get_course_contextid(uint instanceid);
 
 		//moodle中为加强密码安全性而使用的passwordsalt
 		static string	m_passwordsalt;
 
 		//程序使用者id
-		static uint	m_userid;
+		static uint		m_userid;
 
 		//关联的课程
 		static Course   m_course;

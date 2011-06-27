@@ -118,14 +118,14 @@ namespace mdldb{
 		//连接数据库
 		bool		connect() throw(MDLDB_Exception);
 		//判断已连接数据库
-		inline bool connected() const {return m_mdl.get() != NULL;}
+		inline bool connected() const {return m_mdlconn.get() != NULL;}
 
 	protected:
 		static string	m_dbhost;
 		static string	m_dbuser;
 		static string	m_dbpasswd;
 
-		static auto_ptr<Connection>			m_mdl;
+		static auto_ptr<Connection>				m_mdlconn;
 		static auto_ptr<mysql::MySQL_Driver>	m_driver;
 	};
 
