@@ -18,6 +18,10 @@
 #define IDS_STRING110                   110
 #define IDS_STRING111                   111
 #define IDS_STRING112                   112
+#define IDS_ATTENDANT_STATUS            113
+#define IDS_STRING114                   114
+#define IDS_STRING115                   115
+#define IDS_STRING116                   116
 #define IDR_MAINFRAME                   128
 #define IDD_ENTRY                       129
 #define IDD_ATTENDANT                   131
@@ -42,7 +46,6 @@
 #define ID_BACK                         1023
 #define IDC_COURSE                      1024
 #define IDC_SESSION                     1025
-#define IDC_SESSION2                    1026
 #define IDC_GROUP                       1026
 #define IDC_ATTENDANT_IDNUMBER          1027
 #define IDC_ATTENDANT_FULLNAME          1028

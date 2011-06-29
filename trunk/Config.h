@@ -4,12 +4,6 @@
 
 using namespace std;
 
-const int CFG_DBHOST = 0;
-const int CFG_DBPORT = 1;
-const int CFG_DBUSER = 2;
-const int CFG_DBPASSWD = 3;
-const int CFG_PASSWORDSALT = 4;
-
 class Config {
 public:
 	enum{BUFFER_SIZE = 100};
@@ -29,8 +23,6 @@ public:
 	static string m_dbuser;
 	static string m_dbpasswd;
 	static string m_passwordsalt;
-
-	string& operator [](int index);
 
 protected:
 	static CString m_path;

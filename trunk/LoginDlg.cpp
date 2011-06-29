@@ -58,10 +58,8 @@ END_MESSAGE_MAP()
 // CLoginDlg ¶Ô»°¿ò
 
 
-
-
 CLoginDlg::CLoginDlg(Config& cfg,
-					 CWnd* pParent /*=NULL*/)
+					 CWnd* pParent)
 	: CDialog(CLoginDlg::IDD, pParent),
 	m_cfg(cfg),
 	m_mdl(cfg.m_dbhost, cfg.m_dbport, cfg.m_dbuser, cfg.m_dbpasswd, cfg.m_passwordsalt)
@@ -81,7 +79,7 @@ BEGIN_MESSAGE_MAP(CLoginDlg, CDialog)
 	//}}AFX_MSG_MAP
 	ON_BN_CLICKED(ID_CONNECT, &CLoginDlg::OnBnClickedConnect)
 	ON_BN_CLICKED(ID_EXIT, &CLoginDlg::OnBnClickedExit)
-	ON_COMMAND(ID_32772, &CLoginDlg::On32772)
+	ON_COMMAND(ID_32772, &CLoginDlg::OnMenuClickedConfig)
 	ON_COMMAND(ID_32771, &CLoginDlg::OnClickAbout)
 END_MESSAGE_MAP()
 
@@ -217,7 +215,7 @@ void CLoginDlg::OnBnClickedExit()
 	this->EndDialog(ID_EXIT);
 }
 
-void CLoginDlg::On32772()
+void CLoginDlg::OnMenuClickedConfig()
 {
 	CDialog* dlg = new CDialog();
 	CConfigDlg CConfigDlg(m_cfg);

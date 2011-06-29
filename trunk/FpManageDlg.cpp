@@ -183,7 +183,8 @@ HRESULT CALLBACK EnrollmentProc(HWND hParentWnd, DP_ENROLLMENT_ACTION enrollment
 				delete [] fpTemplate[fingerIndex].pbData;
 			fpTemplate[fingerIndex].cbData = 0;
 			fpTemplate[fingerIndex].pbData = NULL;
-			fpTemplate[fingerIndex].pbData = new byte[newFpTemplate->cbData];
+			if ((fpTemplate[fingerIndex].pbData = new byte[newFpTemplate->cbData]) == NULL)
+				throw exception("lack of memroy");
 			memcpy(fpTemplate[fingerIndex].pbData, newFpTemplate->pbData, newFpTemplate->cbData);
 			fpTemplate[fingerIndex].cbData = newFpTemplate->cbData;
 			break;

@@ -57,8 +57,8 @@ namespace mdldb{
 
 	bool Mdldb::auth_check_passwd(uint id, string password)
 	{
-		static char md5passwd[32] = {0};
-		static byte md5result[32] = {0};
+		static char md5passwd[33] = {0};
+		static byte md5result[33] = {0};
 
 		password += m_passwordsalt;
 
@@ -67,7 +67,7 @@ namespace mdldb{
 		md5.Final(md5result);
 
 		for (int i = 0; i < 16; i++)
-			sprintf(md5passwd + i*2, "%02x", md5result[i]);
+			sprintf_s(md5passwd + i*2, sizeof(md5passwd) - i*2, "%02x", md5result[i]);
 
 		//验证用户密码
 		m_mdlconn->setSchema("moodle");
@@ -333,30 +333,39 @@ namespace mdldb{
 		SQLContainer sql_container(m_mdlconn.get(), sql_get_studentid);
 		sql_container << idnumber;
 		auto_ptr<ResultSet> rs(sql_container.exeQuery());
-		if (rs->rowsCount() == 1) {
-			rs->next();
-			return rs->getUInt("id");
-		} else
+		if (rs->rowsCount() != 1)
 			return -1;
+		rs->next();
+		return rs->getUInt("id");
 	}
 
-	bool Mdldb::attendant_update(uint status, uint studentid)
+	bool Mdldb::attendance_log_exists(uint studentid)
 	{
-		//如果数据库存在考勤记录，更新之
 		m_mdlconn->setSchema("moodle");
-		int rows_affected;
 		const char* sql_update = 
-			"UPDATE mdl_attendance_log SET statusid=? \
-			WHERE sessionid=? AND studentid=?";
+			"SELECT id FROM mdl_attendance_log WHERE sessionid=? AND studentid=?";
 		SQLContainer sql_container(m_mdlconn.get(), sql_update);
-		sql_container << status << m_sess.id << studentid;
-		if ((rows_affected = sql_container.exeUpdate()) >= 1)
+		sql_container << m_sess.id << studentid;
+		auto_ptr<ResultSet> rs(sql_container.exeQuery());
+
+		if (rs->rowsCount() >= 1)
 			return true;
 		else
 			return false;
 	}
 
-	void Mdldb::attendant_insert(uint status, uint studentid)
+	void Mdldb::attendance_log_update(uint studentid, uint status, const string& description)
+	{
+		m_mdlconn->setSchema("moodle");
+		const char* sql_update = 
+			"UPDATE mdl_attendance_log SET statusid=? \
+			WHERE sessionid=? AND studentid=?";
+		SQLContainer sql_container(m_mdlconn.get(), sql_update);
+		sql_container << status << m_sess.id << studentid;
+		sql_container.execute();
+	}
+
+	void Mdldb::attendance_log_insert(uint studentid, uint status, const string& description)
 	{
 		uint now = time(NULL);
 		m_mdlconn->setSchema("moodle");
@@ -367,11 +376,11 @@ namespace mdldb{
 
 		SQLContainer sql_container(m_mdlconn.get(), sql_insert);
 		sql_container << m_sess.id << studentid << status 
-			<< m_sess.statuesset << now << m_userid << "";
+			<< m_sess.statuesset << now << m_userid << description;
 		sql_container.execute();
 	}
 
-	void Mdldb::attendant(string idnumber)
+	void Mdldb::attendant(string idnumber, uint status, const string &description)
 	{
 		if (!connected())
 			throw MDLDB_Exception("没有连接到数据库", DISCONNECTED);
@@ -381,26 +390,19 @@ namespace mdldb{
 			throw MDLDB_Exception("没有关联会话", NO_SESSION);
 
 		int studentid;
-		uint status, now = time(NULL);
+		uint now = time(NULL);
 
 		try {
 			
 			if ((studentid = get_userid(idnumber)) == -1)
 				throw MDLDB_Exception("内部错误：不合法的学号", GENERAL_ERROR);
 
-			if (now <= m_sess.sessdate)
-				status = m_sess.statuses[ATTEND];
-			else if (now <= m_sess.sessdate + m_sess.duration)
-				status = m_sess.statuses[LATE];
+			//数据库不存在相应考勤记录，则插入一条记录
+			if (attendance_log_exists(studentid))
+				attendance_log_update(studentid, status, description);
 			else
-				status = m_sess.statuses[ABSENT];
+				attendance_log_insert(studentid, status, description);
 
-			if (attendant_update(status, studentid) == true)
-				return;
-			else { 
-				//数据库不存在相应考勤记录，插入一条记录
-				attendant_insert(status, studentid);
-			}
 		} catch(SQLException& e) {
 			throw MDLDB_Exception(e.what(), GENERAL_ERROR);
 		}
@@ -414,11 +416,13 @@ namespace mdldb{
 		SQLContainer sql_container(m_mdlconn.get(), sql_context);
 		sql_container << instanceid << contextlevel;
 		auto_ptr<ResultSet> rs(sql_container.exeQuery());
-		if (rs->rowsCount() == 1) {
-			rs->next();
-			return rs->getUInt("id");
-		} else
+
+		if (rs->rowsCount() != 1)
 			return -1;
+
+		rs->next();
+		return rs->getUInt("id");
+			
 	}
 
 	/**
@@ -432,18 +436,13 @@ namespace mdldb{
 			throw MDLDB_Exception("没有连接到数据库", DISCONNECTED);
 
 		try {
-			/**
-			 * 获取moodle课程的context
-			 * contextlevel = 50意味着选择的是课程的实例
-			 * moodle中如此定义：define('CONTEXT_COURSE', 50);
-			 */
-			
-			int contextid;
 
-			if ((contextid = get_course_contextid(m_course.id, 50)) == -1)
+			int contextid = get_contextid(m_course.id, COURSE_CONTEXT_LEVEL);
+
+			if (contextid == -1)
 				throw MDLDB_Exception("会话不唯一", GENERAL_ERROR);
 
-			//获取选修moodle课程的所有学生
+			//获取选修对应课程的所有学生信息
 			m_mdlconn->setSchema("student");
 			const char* sql = "SELECT idnumber, fullname, fp_index, fp_size, fp_data\
 							   FROM info AS i LEFT JOIN fingerprint AS fp \
@@ -474,7 +473,8 @@ namespace mdldb{
 
 					is = rs->getBlob("fp_data");
 					if (fpdata.size != 0) {
-						fpdata.data = new byte[fpdata.size];
+						if ((fpdata.data = new byte[fpdata.size]) == NULL)
+							throw MDLDB_Exception("内存不足", GENERAL_ERROR);
 						is->read((char*)fpdata.data, fpdata.size);
 					} else
 						fpdata.data = NULL;
