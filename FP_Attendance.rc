@@ -327,6 +327,10 @@ END
 STRINGTABLE 
 BEGIN
     IDS_STRING112           "左手小指"
+    IDS_ATTENDANT_STATUS    "出勤"
+    IDS_STRING114           "缺席"
+    IDS_STRING115           "迟到"
+    IDS_STRING116           "请假"
 END
 
 #endif    // 中文(中华人民共和国) resources

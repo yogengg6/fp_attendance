@@ -27,7 +27,7 @@ namespace mdldb{
 		ATTEND	= 0,
 		ABSENT	= 1,
 		LATE	= 2,
-		EXCUSE	= 3,
+		EXCUSE	= 3
 	};
 
 	typedef struct{
@@ -38,11 +38,18 @@ namespace mdldb{
 		uint lasttakenby;
 		//四种状态（出勤、迟到、请假、旷课）
 		uint statuses[4];
-		//需要写入的statusset，根据grade排序
+		//需要写入的状态集(statusset)，根据分数(grade)排序
 		string	statuesset;
 	} Session;
 
+	//也就是10分钟左右
 	const time_t  BEFORE_CLASS_BEGIN =  10 * 60 - 1;
+
+	/**
+	 * 课程的Context Level
+	 * moodle中如此定义：define('CONTEXT_COURSE', 50);
+	 */
+	const int     COURSE_CONTEXT_LEVEL = 50;
 
 	class Mdldb : public Mdldb_base
 	{
@@ -56,17 +63,20 @@ namespace mdldb{
 		Mdldb(Mdldb& mdl) : Mdldb_base(mdl){;}
 		~Mdldb(void);
 
-		//考勤者用户信息验证
-		void		auth(string username, string password);
-
-		//关联课程并获取相应的状态集m_statuses
-		void		associate_course(uint32_t id);
-
 		//判断课程是否存在attendance插件实例
 		inline bool course_has_attendance() const {return m_course.has_attendance;}
 
 		//判断已关联课程
 		inline bool course_associated()  const {return m_course.id > 0;}
+
+		//判断已关联会话
+		inline bool session_associated() const {return m_sess.id > 0;}
+
+		//考勤者用户信息验证
+		void		auth(string username, string password);
+
+		//关联课程并获取相应的状态集m_statuses
+		void		associate_course(uint32_t id);
 
 		/** 
 		 * 获取所有授权课程信息
@@ -78,9 +88,6 @@ namespace mdldb{
 		bool		associate_session(const string session_name) 
 			throw(mdldb::MDLDB_Exception);
 
-		//判断已关联会话
-		inline bool session_associated() const {return m_sess.id > 0;}
-
 		//根据时间获取可能的会话的描述
 		void		get_session_discription(vector<string>& sessions, uint32_t course_id = 0);
 
@@ -91,8 +98,7 @@ namespace mdldb{
 		void        fpdelete(string idnumber);
 
 		//根据学号判断出勤状态
-		void		attendant(string idnumber);
-
+		void		attendant(string idnumber, uint status, const string &description);
 
 		// 获取课程的小组
 		void		get_course_groups(vector<Group>& groups);
@@ -103,6 +109,8 @@ namespace mdldb{
 		//获取部分学生信息
 		void		get_students(vector<Student>& students, const string& idnumber, size_t limit)
 			throw(mdldb::MDLDB_Exception);
+
+		inline Session get_session() {return m_sess;}
 			
 	private:
 		bool		auth_user_exists(string username);
@@ -112,11 +120,12 @@ namespace mdldb{
 		bool		get_statusset();
 		void		get_ordered_statusset();
 
+		bool		attendance_log_exists(uint studentid);
+		void		attendance_log_insert(uint studentid, uint status, const string& description);
+		void		attendance_log_update(uint studentid, uint status, const string& description);
+
 		int			get_userid(string idnumber);
-
-		void		attendant_insert(uint status, uint studentid);
-		bool		attendant_update(uint status, uint studentid);
-
+		int         get_contextid(uint instanceid, uint contextlevel);
 		int			get_course_contextid(uint instanceid);
 
 		//moodle中为加强密码安全性而使用的passwordsalt

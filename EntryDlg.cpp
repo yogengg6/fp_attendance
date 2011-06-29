@@ -140,7 +140,7 @@ void CEntryDlg::OnBnClickedAttendant()
 {
 	m_courseStatic.EnableWindow(TRUE);
 	m_courseComboBox.EnableWindow(TRUE);
-	if (m_mdl.course_associated() && m_mdl.course_has_session()) {
+	if (m_mdl.course_associated() && m_mdl.course_has_attendance()) {
 		m_sessionStatic.EnableWindow(TRUE);
 		m_sessionComboBox.EnableWindow(TRUE);
 	}
@@ -158,7 +158,7 @@ void CEntryDlg::OnCbnSelendokCourse()
 		m_mdl.associate_course(m_course[index].id);
 
 		m_mdl.get_session_discription(m_session);
-		if (m_mdl.course_has_session() && m_session.size() > 0) {
+		if (m_mdl.course_has_attendance() && m_session.size() > 0) {
 			for (unsigned int i = 0; i < m_session.size(); ++i)
 				m_sessionComboBox.AddString(stringToCString(m_session[i]));
 			m_sessionStatic.EnableWindow(TRUE);
@@ -178,7 +178,7 @@ void CEntryDlg::OnCbnSelendokSession()
 
 void CEntryDlg::OnCbnSelchangeCourse()
 {
-	if (m_mdl.course_has_session()) {
+	if (m_mdl.course_has_attendance()) {
 		m_sessionStatic.EnableWindow(TRUE);
 		m_sessionComboBox.EnableWindow(TRUE);
 	} else {

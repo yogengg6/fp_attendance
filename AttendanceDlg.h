@@ -22,6 +22,7 @@
 #include "mdldb/Mdldb.h"
 
 using namespace std;
+using namespace mdldb;
 
 // CAttendanceDlg 对话框
 
@@ -30,7 +31,7 @@ class CAttendanceDlg : public CDialog
 	DECLARE_DYNAMIC(CAttendanceDlg)
 
 public:
-	CAttendanceDlg(mdldb::Mdldb& conn, CWnd* pParent = NULL);
+	CAttendanceDlg(Mdldb& conn, CWnd* pParent = NULL);
 	virtual ~CAttendanceDlg();
 
 	void AddStatus(LPCTSTR s);
@@ -40,7 +41,15 @@ public:
 	enum { FP_NOTIFY = WM_USER + 100 };
 	enum { FP_NOT_FOUND = -1, DEVICE_ERROR = -1, LACK_MEMORY = -3};
 
-protected:
+private:
+	typedef struct {
+		int index;
+		uint status;
+		CString description;
+	} AttendInfo;
+
+	enum {ALREADY_PRE_ATTEND = -1};
+	
 	//窗体控件成员变量
 	CListBox*		m_notify;
 
@@ -51,11 +60,21 @@ protected:
 	DATA_BLOB       m_RegTemplate;
 
 	//数据结构成员变量
-	mdldb::Mdldb				m_mdl;
-	vector<mdldb::Student>	m_student_info;
+	Mdldb	m_mdl;
+	vector<Student>	m_student_info;
+
+	Session			m_session;
+
+	vector<AttendInfo>		m_studentsToAttendant;
 
 	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
+
+	int  locateStudentsToAttendant(int index);
+	int preAttendant(int index);
+
+	void initFpDevice();
+	void TerminateFpDevice();
 
 	/** 
 	 * 从数据库（或本地）中的指纹数据一一比对，找到匹配的数据后返回

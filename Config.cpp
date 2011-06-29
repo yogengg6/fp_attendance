@@ -24,30 +24,14 @@ Config::Config()
 	}
 }
 
-string& Config::operator [](int index)
-{
-	switch (index) {
-	case CFG_DBHOST:
-		return m_dbhost;
-	case CFG_DBPORT:
-		return m_dbport;
-	case CFG_DBUSER:
-		return m_dbuser;
-	case CFG_DBPASSWD:
-		return m_dbpasswd;
-	case CFG_PASSWORDSALT:
-		return m_passwordsalt;
-	default:
-		throw exception("invalid index");
-		break;
-	}
-}
-
 void Config::encode_buffer()
 {
 	const int BLOCKSIZE = BlowfishEncryption::BLOCKSIZE;
-	BlowfishEncryption be;
+	static BlowfishEncryption be;
+	static byte* enc_block = NULL;
+	static size_t enc_block_size = 0;
 	const char *LicenseKey = "test";
+
 	be.SetKey( (const byte*)LicenseKey, BlowfishEncryption::DEFAULT_KEYLENGTH);
 
 	size_t strlength = m_buffer.GetLength()*2;
@@ -56,11 +40,18 @@ void Config::encode_buffer()
 		block_count = strlength/BLOCKSIZE;
 	else
 		block_count = strlength/BLOCKSIZE +1;
+
 	size_t size = block_count * BLOCKSIZE;
 
-	byte* enc_block = NULL;
-	enc_block = new byte[size];
-	ZeroMemory(enc_block, size);
+	if (block_count * BLOCKSIZE > enc_block_size) {
+		delete enc_block;
+		enc_block = NULL;
+		enc_block_size = block_count * BLOCKSIZE;
+		if ((enc_block = new byte[enc_block_size]) == NULL)
+			throw exception("Lack of Memory");
+	}
+
+	ZeroMemory(enc_block, enc_block_size);
 
 	wchar_t* pBuf = m_buffer.GetBuffer();
 
@@ -73,8 +64,6 @@ void Config::encode_buffer()
 
 	for (size_t i = 0; i < size; ++i)
 		m_buffer.AppendFormat(L"%02x", enc_block[i]);
-
-	delete enc_block;
 }
 
 void Config::decode_buffer()
@@ -89,7 +78,8 @@ void Config::decode_buffer()
 	block_count = size/BLOCKSIZE;
 
 	byte* dec_block = NULL;
-	dec_block = new byte[size];
+	if ((dec_block = new byte[size]) == NULL)
+		throw exception("lack of memory");
 	ZeroMemory(dec_block, size);
 
 	//十六进制字符串转换为数据

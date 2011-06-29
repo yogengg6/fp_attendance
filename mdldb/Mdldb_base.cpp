@@ -29,9 +29,10 @@ using namespace sql;
 namespace mdldb
 {
 	typedef unsigned char byte;
-	string								Mdldb_base::m_dbhost = "";
-	string								Mdldb_base::m_dbuser = "";
-	string								Mdldb_base::m_dbpasswd = "";
+
+	string							Mdldb_base::m_dbhost = "";
+	string							Mdldb_base::m_dbuser = "";
+	string							Mdldb_base::m_dbpasswd = "";
 
 	auto_ptr<Connection>			Mdldb_base::m_mdlconn(NULL);
 	auto_ptr<mysql::MySQL_Driver>	Mdldb_base::m_driver(NULL);
