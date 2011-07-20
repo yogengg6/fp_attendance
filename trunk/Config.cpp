@@ -35,17 +35,20 @@ void Config::encode_buffer()
 	be.SetKey( (const byte*)LicenseKey, BlowfishEncryption::DEFAULT_KEYLENGTH);
 
 	size_t strlength = m_buffer.GetLength()*2;
+
 	size_t block_count;
 	if (strlength % BLOCKSIZE == 0)
 		block_count = strlength/BLOCKSIZE;
-	else
-		block_count = strlength/BLOCKSIZE +1;
-
+	else {
+		block_count = strlength/BLOCKSIZE+1;
+	}
 	size_t size = block_count * BLOCKSIZE;
 
-	if (block_count * BLOCKSIZE > enc_block_size) {
-		delete enc_block;
-		enc_block = NULL;
+	if (size > enc_block_size) {
+		if (enc_block != NULL) {
+			delete enc_block;
+			enc_block = NULL;
+		}
 		enc_block_size = block_count * BLOCKSIZE;
 		if ((enc_block = new byte[enc_block_size]) == NULL)
 			throw exception("Lack of Memory");
@@ -54,8 +57,8 @@ void Config::encode_buffer()
 	ZeroMemory(enc_block, enc_block_size);
 
 	wchar_t* pBuf = m_buffer.GetBuffer();
-
 	memcpy(enc_block, pBuf, strlength);
+	m_buffer.ReleaseBuffer();
 
 	for (size_t i = 0; i < block_count; ++i)
 		be.ProcessBlock(enc_block + i*BLOCKSIZE);
@@ -70,20 +73,35 @@ void Config::decode_buffer()
 {
 	const int BLOCKSIZE = BlowfishDecryption::BLOCKSIZE;
 	BlowfishDecryption bd;
+	static byte* dec_block = NULL;
+	static size_t dec_block_size = 0;
 	const char *LicenseKey = "test";
 	bd.SetKey((const byte*)LicenseKey, BlowfishDecryption::DEFAULT_KEYLENGTH);  
 
-	size_t size = m_buffer.GetLength()/2;
+	size_t strlength = m_buffer.GetLength()/2;
 	size_t block_count;
-	block_count = size/BLOCKSIZE;
+	if (strlength % BLOCKSIZE == 0)
+		block_count = strlength/BLOCKSIZE;
+	else {
+		block_count = strlength/BLOCKSIZE+1;
+	}
+	size_t size = block_count*BLOCKSIZE + 2;
+	
 
-	byte* dec_block = NULL;
-	if ((dec_block = new byte[size]) == NULL)
-		throw exception("lack of memory");
-	ZeroMemory(dec_block, size);
+	if (size > dec_block_size) {
+		if (dec_block != NULL) {
+			delete dec_block;
+			dec_block = NULL;
+		}
+		dec_block_size = size;
+		if ((dec_block = new byte[dec_block_size]) == NULL)
+			throw exception("Lack of Memory");
+	}
+
+	ZeroMemory(dec_block, dec_block_size);
 
 	//十六进制字符串转换为数据
-	for (size_t i = 0; i < size; ++i) {
+	for (size_t i = 0; i < strlength; ++i) {
 		dec_block[i] = hexchar_to_byte(m_buffer[i*2]) << 4;
 		dec_block[i] += hexchar_to_byte(m_buffer[i*2+1]);
 	}
@@ -114,7 +132,8 @@ bool Config::load()
 	if (read_profile_string(L"database", L"dbpasswd")) {
 		decode_buffer();
 		m_dbpasswd = CStringToString(m_buffer);
-	}
+	} else
+		return false;
 
 	if (read_profile_string(L"moodle", L"passwordsalt"))
 		m_passwordsalt = CStringToString(m_buffer);
