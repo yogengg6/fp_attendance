@@ -6,7 +6,7 @@ using namespace std;
 
 class Config {
 public:
-	enum{BUFFER_SIZE = 100};
+	enum{BUFFER_SIZE = 128};
 
 	Config();
 	~Config()
@@ -36,7 +36,7 @@ protected:
 	}
 
 	inline int read_profile_string(wchar_t* section, wchar_t* field) {
-		int val = GetPrivateProfileString(section, field, L"", m_buffer.GetBufferSetLength(BUFFER_SIZE), BUFFER_SIZE, m_path);
+		int val = GetPrivateProfileString(section, field, L"", m_buffer.GetBuffer(BUFFER_SIZE), BUFFER_SIZE, m_path);
 		m_buffer.ReleaseBuffer();
 		return val;
 	}

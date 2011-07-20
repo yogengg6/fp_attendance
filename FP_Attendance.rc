@@ -83,7 +83,7 @@ CAPTION "关于 指纹识别考勤系统"
 FONT 9, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,14,14,20,20
-    LTEXT           "指纹识别考勤系统，1.0 版",IDC_STATIC,42,14,114,9,SS_NOPREFIX
+    LTEXT           "指纹识别考勤系统，0.3 版",IDC_STATIC,42,14,114,9,SS_NOPREFIX
     LTEXT           "Copyleft (C) 2011",IDC_STATIC,42,82,149,8
     DEFPUSHBUTTON   "确定",IDOK,141,93,50,14,WS_GROUP
     LTEXT           "开发组织：",IDC_STATIC,42,24,37,9,SS_NOPREFIX
@@ -91,7 +91,7 @@ BEGIN
     LTEXT           "邱布衣(Qiuchengxuan@gmail.com)",IDC_STATIC,79,34,112,11,SS_NOPREFIX
     LTEXT           "章维",IDC_STATIC,79,44,112,11,SS_NOPREFIX
     LTEXT           "许建成",IDC_STATIC,79,53,112,11,SS_NOPREFIX
-    LTEXT           "本软件采用GPLv2授权",IDC_STATIC,42,64,149,8
+    LTEXT           "本软件采用BSD License协议授权",IDC_STATIC,42,64,149,8
 END
 
 IDD_LOGIN DIALOGEX 0, 0, 155, 72
